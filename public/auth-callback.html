@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Authenticating...</title>
+</head>
+<body>
+  <script>
+    // Supabase redirects to this page with the session info in the hash
+    const hash = window.location.hash;
+    if (window.opener && hash) {
+      // Send the hash back to the main application window
+      window.opener.postMessage({ type: 'OAUTH_AUTH_SUCCESS', hash }, window.location.origin);
+      window.close();
+    } else if (window.opener) {
+      window.opener.postMessage({ type: 'OAUTH_AUTH_ERROR', message: 'No authentication data found' }, window.location.origin);
+      window.close();
+    } else {
+      // Fallback if opened directly
+      window.location.href = '/';
+    }
+  </script>
+  <div style="font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh;">
+    <p>Authenticating with AIRRA...</p>
+  </div>
+</body>
+</html>

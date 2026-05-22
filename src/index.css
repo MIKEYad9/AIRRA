@@ -1,31 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600;700;800;900&family=Syne:wght@400;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", sans-serif;
   --font-serif: "Playfair Display", serif;
+  --font-accent: "Syne", sans-serif;
+
+  /* Premium AIRRA Palette - Handcrafted Luxury */
+  
+  /* DARK MODE SPEC */
+  --color-airra-dark-bg: #07110C;       /* Rich black-green */
+  --color-airra-dark-forest: #0D1F16;     /* Deep forest green */
+  --color-airra-dark-surface: #0E1612;   /* Deep charcoal-green */
+  --color-airra-dark-border: #1B2921;    /* Subtle forest border */
+  --color-airra-dark-text: #F5F4EE;      /* Soft cream text */
+  --color-airra-dark-muted: #8A9A8E;     /* Muted sage/olive */
+  --color-airra-dark-primary: #74B18F;    /* Brightened Olive for Dark Mode Accessibility */
+  --color-airra-dark-glow: #A7C4A0;       /* Sage glow */
+
+  /* LIGHT MODE SPEC */
+  --color-airra-bg: #F7F5EF;            /* Warm ivory */
+  --color-airra-surface: #FFFFFF;
+  --color-airra-border: #E8E5DF;         /* Warm grey-beige */
+  --color-airra-text: #172D24;           /* Deepened green for better contrast */
+  --color-airra-muted: #5C6B61;          /* Muted charcoal-olive */
+  --color-airra-primary: #2D6A4F;        /* Deep therapeutic green */
+  --color-airra-accent: #5C7C52;         /* Muted olive */
+
+  /* Fluid Typography - "Fitting the frame" */
+  --text-airra-hero: clamp(3.5rem, 15vw, 14rem);
+  --text-airra-display: clamp(2.5rem, 8vw, 6rem);
+  --text-airra-title: clamp(1.5rem, 4vw, 3rem);
+  --shadow-airra-sm: 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+  --shadow-airra-md: 0 12px 24px -10px rgba(0, 0, 0, 0.08);
+  --shadow-airra-lg: 0 20px 40px -12px rgba(0, 0, 0, 0.12);
+  --shadow-airra-xl: 0 42px 74px -15px rgba(0, 0, 0, 0.15);
+  --shadow-airra-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+
+  --radius-airra: 32px;
 }
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply bg-[#0a0502] text-white/90 antialiased selection:bg-orange-500/30;
+    @apply bg-airra-bg text-airra-text antialiased selection:bg-airra-primary/10 transition-colors duration-700 font-sans;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  .dark body {
+    @apply bg-airra-dark-bg text-airra-dark-text;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tighter text-airra-text dark:text-airra-dark-text leading-[0.95];
+  }
+
+  p {
+    @apply leading-relaxed;
   }
 }
 
 @layer utilities {
-  .glass {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10;
-  }
-  
-  .atmosphere-bg {
-    background: 
-      radial-gradient(circle at 50% 0%, rgba(255, 78, 0, 0.15) 0%, transparent 50%),
-      radial-gradient(circle at 0% 100%, rgba(0, 149, 255, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 100% 100%, rgba(255, 0, 128, 0.1) 0%, transparent 50%);
+  .airra-card {
+    @apply bg-airra-surface dark:bg-airra-dark-surface border border-airra-border dark:border-airra-dark-border shadow-airra-md rounded-airra transition-all duration-700;
   }
 
-  .text-glow {
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+  .airra-glass {
+    @apply bg-white/40 dark:bg-airra-dark-forest/40 backdrop-blur-3xl border border-white/20 dark:border-white/5 shadow-airra-xl rounded-airra;
+  }
+
+  .airra-button {
+    @apply h-14 px-10 rounded-2xl font-display font-black text-[10px] uppercase tracking-[0.25em] transition-all duration-500 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3;
+  }
+
+  .airra-gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-airra-primary to-airra-accent dark:from-airra-dark-glow dark:to-airra-dark-primary;
+  }
+
+  .atmosphere-bg {
+    @apply bg-airra-bg dark:bg-airra-dark-bg relative overflow-hidden;
+  }
+
+  .atmosphere-bg::before {
+    content: '';
+    @apply absolute inset-0 pointer-events-none opacity-60 dark:opacity-30;
+    background: 
+      radial-gradient(circle at 0% 0%, var(--color-airra-border) 0%, transparent 60%),
+      radial-gradient(circle at 100% 100%, var(--color-airra-dark-glow) 0%, transparent 70%);
+  }
+
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+  }
+
+  .animate-float {
+    animation: float 8s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); opacity: 0.15; }
+    50% { transform: scale(1.1); opacity: 0.3; }
+  }
+
+  .animate-breathe {
+    animation: breathe 10s ease-in-out infinite;
   }
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap');
