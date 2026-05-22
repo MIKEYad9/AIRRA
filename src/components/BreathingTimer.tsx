@@ -17,7 +17,11 @@ import {
   TrendingUp,
   Zap,
   HelpCircle,
-  ShieldCheck
+  ShieldCheck,
+  Target,
+  Maximize2,
+  Minimize2,
+  Clock
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -26,7 +30,10 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  CartesianGrid
+  CartesianGrid,
+  ReferenceDot,
+  Label,
+  ReferenceLine
 } from "recharts";
 import { 
   calculateRealtimeBiometrics, 
@@ -45,6 +52,13 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
   const [cycleCount, setCycleCount] = useState<number>(0);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [showGuide, setShowGuide] = useState<boolean>(false);
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [showBpmSeries, setShowBpmSeries] = useState<boolean>(true);
+  const [showHrvSeries, setShowHrvSeries] = useState<boolean>(true);
+  const [showGuidancePath, setShowGuidancePath] = useState<boolean>(false);
+  const [showPeaks, setShowPeaks] = useState<boolean>(true);
+  const [showBaseline, setShowBaseline] = useState<boolean>(true);
+  const [zoomRange, setZoomRange] = useState<[number, number]>([0, 100]);
 
   // Integrated Health State
   const [isConnected, setIsConnected] = useState<boolean>(false);
@@ -60,7 +74,14 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
     bpm: number;
     hrv: number;
     coherence: number;
+    phase?: string;
+    id?: number;
+    guidance?: number;
   }[]>([]);
+
+  // HRV goal setting and baseline parameters
+  const [targetHrvImprovement, setTargetHrvImprovement] = useState<number>(20);
+  const [initialHrv] = useState<number>(48);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -114,6 +135,78 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
       oscillatorsRef.current.inhaleOsc2 = undefined;
       oscillatorsRef.current.holdDrone = undefined;
     }, 120);
+  };
+
+  const playHarmonicSound = (type: "chime" | "gong") => {
+    if (!soundEnabled) return;
+    initAudio();
+    const ctx = audioCtxRef.current;
+    if (!ctx || ctx.state === "closed") return;
+
+    if (ctx.state === "suspended") {
+      ctx.resume();
+    }
+
+    const now = ctx.currentTime;
+    const chimeGain = ctx.createGain();
+    chimeGain.connect(ctx.destination);
+    chimeGain.gain.setValueAtTime(0.001, now);
+
+    if (type === "chime") {
+      // Gentle warm chime chord (E Major: E5, G#5, B5, E6)
+      chimeGain.gain.linearRampToValueAtTime(0.08, now + 0.08);
+      chimeGain.gain.exponentialRampToValueAtTime(0.001, now + 3.0);
+
+      const freqs = [659.25, 830.61, 987.77, 1318.51];
+      freqs.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, now);
+        osc.detune.setValueAtTime((idx - 1.5) * 5, now);
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(1500, now);
+
+        const bandGain = ctx.createGain();
+        bandGain.gain.setValueAtTime(0.05 / freqs.length, now);
+        bandGain.gain.exponentialRampToValueAtTime(0.001, now + (3.0 - idx * 0.3));
+
+        osc.connect(filter);
+        filter.connect(bandGain);
+        bandGain.connect(chimeGain);
+
+        osc.start(now);
+        osc.stop(now + 3.5);
+      });
+    } else {
+      // Deep resonant bronze gong sound (A2, E3, A3, C#4)
+      chimeGain.gain.linearRampToValueAtTime(0.12, now + 0.15);
+      chimeGain.gain.exponentialRampToValueAtTime(0.001, now + 4.5);
+
+      const freqs = [110.00, 164.81, 220.00, 277.18];
+      freqs.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        osc.type = idx % 2 === 0 ? "sine" : "triangle";
+        osc.frequency.setValueAtTime(freq, now);
+        osc.detune.setValueAtTime((idx - 1.5) * 4, now);
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(450, now);
+
+        const bandGain = ctx.createGain();
+        bandGain.gain.setValueAtTime(0.05 / freqs.length, now);
+        bandGain.gain.exponentialRampToValueAtTime(0.001, now + (4.5 - idx * 0.4));
+
+        osc.connect(filter);
+        filter.connect(bandGain);
+        bandGain.connect(chimeGain);
+
+        osc.start(now);
+        osc.stop(now + 5.0);
+      });
+    }
   };
 
   const playPhaseSound = (currentPhase: "inhale" | "hold" | "exhale") => {
@@ -257,10 +350,12 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
             if (phase === "inhale") {
               setPhase("hold");
               playPhaseSound("hold");
+              playHarmonicSound("chime");
               return HOLD_DURATION;
             } else if (phase === "hold") {
               setPhase("exhale");
               playPhaseSound("exhale");
+              playHarmonicSound("gong");
               return EXHALE_DURATION;
             } else {
               setPhase("inhale");
@@ -298,16 +393,24 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
         if (phase === "exhale") label = `Out ${EXHALE_DURATION - currentSecondIndex}s`;
 
         setLiveTelemetry((prev) => {
+          const tickIndex = prev.length;
+          const period = 19; // 19s resonant wave frequency
+          const waveVal = Math.sin((2 * Math.PI * tickIndex) / period);
+          const hrvGuidance = Math.round(70 + waveVal * 15); // beautifully swings between 55ms and 85ms
+
           const updated = [
             ...prev,
             {
               time: label,
               bpm: computed.bpm,
               hrv: computed.hrv,
-              coherence: computed.coherence
+              coherence: computed.coherence,
+              phase: phase,
+              id: prev.length,
+              guidance: hrvGuidance
             }
           ];
-          return updated.slice(-15); // keep a neat window of 15 data steps
+          return updated.slice(-150); // Keep up to 150 seconds (2.5 mins) of high-resolution telemetry log
         });
       }
     }
@@ -382,10 +485,150 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
     return { scale: 1.0, color: "bg-emerald-500/10 border-emerald-500/30", label: "", instruction: "", progressText: "" };
   };
 
+  // Computed HRV target goals metrics
+  const currentImprovement = Math.max(0, biometrics.hrv - initialHrv);
+  const progressPercent = Math.min(100, Math.round((currentImprovement / targetHrvImprovement) * 100));
+  const goalAchieved = currentImprovement >= targetHrvImprovement;
+
+  // Real-time HRV improvement ratio (0 to 1) for fluid color transition
+  const hrvRatio = targetHrvImprovement > 0 ? Math.min(1, currentImprovement / targetHrvImprovement) : 0;
+
+  // Cool Indigo baseline: RGB(99, 102, 241) (#6366f1)
+  // Warm Gold target: RGB(245, 158, 11) (#f59e0b)
+  const rVal = Math.round(99 + hrvRatio * (245 - 99));
+  const gVal = Math.round(102 + hrvRatio * (158 - 102));
+  const bVal = Math.round(241 + hrvRatio * (11 - 241));
+
+  // Dynamically computed autonomic resonance color tones
+  const dynamicColor = `rgb(${rVal}, ${gVal}, ${bVal})`;
+  const dynamicBgColor = `rgba(${rVal}, ${gVal}, ${bVal}, ${phase === "ready" ? 0.05 : 0.12})`;
+  const dynamicBorderColor = `rgba(${rVal}, ${gVal}, ${bVal}, 0.55)`;
+  const baseGlowRadius = phase === "ready" ? 0 : 25 + hrvRatio * 25;
+  const dynamicBoxShadow = isPlaying 
+    ? `0 0 ${baseGlowRadius}px rgba(${rVal}, ${gVal}, ${bVal}, ${0.25 + hrvRatio * 0.15})` 
+    : "0 0 0px rgba(0,0,0,0)";
+
   const visual = getVisualStyles();
+
+  // Smooth progress ratio calculation for 4-7-8 breathing circle to prevent snaps
+  const getProgressRatio = () => {
+    if (phase === "ready") return 0;
+    if (phase === "inhale") return (INHALE_DURATION - timeLeft) / INHALE_DURATION;
+    if (phase === "hold") return 1.0;
+    if (phase === "exhale") return timeLeft / EXHALE_DURATION;
+    return 0;
+  };
+  const progressRatio = getProgressRatio();
 
   // Animated pulse rate for the visual heart indicator (calculated speed relative to current BPM)
   const pulseDuration = biometrics.bpm > 0 ? (60 / biometrics.bpm).toFixed(2) : "0.8";
+
+  // Session duration in seconds tracking
+  const sessionDurationSec = cycleCount * 19 + (phase !== "ready" ? (phase === "inhale" ? (4 - timeLeft) : phase === "hold" ? (4 + 7 - timeLeft) : (4 + 7 + 8 - timeLeft)) : 0);
+  const formatDuration = (sec: number) => {
+    const mins = Math.floor(sec / 60);
+    const secs = Math.round(sec % 60);
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  };
+
+  // Live session statistics compiled on the fly from telemetry points
+  const statLowestBpm = liveTelemetry.length > 0 ? Math.min(...liveTelemetry.map((t) => t.bpm)) : 72;
+  const statPeakBpm = liveTelemetry.length > 0 ? Math.max(...liveTelemetry.map((t) => t.bpm)) : 72;
+  const statAverageHrv = liveTelemetry.length > 0 ? Math.round(liveTelemetry.reduce((sum, t) => sum + t.hrv, 0) / liveTelemetry.length) : biometrics.hrv;
+  const statPeakHrv = liveTelemetry.length > 0 ? Math.max(...liveTelemetry.map((t) => t.hrv)) : biometrics.hrv;
+  const statAverageCoherence = liveTelemetry.length > 0 ? Math.round(liveTelemetry.reduce((sum, t) => sum + t.coherence, 0) / liveTelemetry.length) : biometrics.coherence;
+  const calmingPercent = Math.min(100, Math.round((statAverageCoherence / 25) * 100));
+
+  // Dynamic instructional microcopy matching our Psychology Design Guidelines
+  const getMicrocopy = () => {
+    if (phase === "ready") return "Sit comfortably, lengthen your spine, and initiate respiration to sync nerves.";
+    if (phase === "inhale") return "Fill your lungs completely from the belly up. Let the clean energy pool inside.";
+    if (phase === "hold") return "Absolute stillness. Relax your shoulders. Let cardiac oscillations align in rest.";
+    if (phase === "exhale") return "Sigh out thoroughly. Drop all residuals. The vagal break is actively slowing down your pulse.";
+    return "";
+  };
+
+  // Memoized interactive zoom calculation for HRV telemetry
+  const displayedTelemetry = React.useMemo(() => {
+    if (liveTelemetry.length <= 5) return liveTelemetry;
+    const startIndex = Math.floor((zoomRange[0] / 100) * liveTelemetry.length);
+    const endIndex = Math.min(
+      liveTelemetry.length,
+      Math.ceil((zoomRange[1] / 100) * liveTelemetry.length)
+    );
+    // Guarantee at least 3 points are shown to keep chart stable
+    if (endIndex - startIndex < 3) {
+      return liveTelemetry.slice(Math.max(0, endIndex - 3), endIndex);
+    }
+    return liveTelemetry.slice(startIndex, endIndex);
+  }, [liveTelemetry, zoomRange]);
+
+  // Identify physiological coherence peaks in HRV stream
+  const peaks = React.useMemo(() => {
+    const list: typeof liveTelemetry = [];
+    if (liveTelemetry.length < 3) return list;
+
+    // Detect local maxima where HRV rises and then falls
+    for (let i = 1; i < liveTelemetry.length - 1; i++) {
+      const prev = liveTelemetry[i - 1].hrv;
+      const curr = liveTelemetry[i].hrv;
+      const next = liveTelemetry[i + 1].hrv;
+
+      // Classify as peak if local maximum and hrv exceeds threshold
+      if (curr > prev && curr > next && curr > 50) {
+        list.push(liveTelemetry[i]);
+      }
+    }
+
+    // Return the top 3 highest intensity coherence peaks in the session to avoid layout clutter
+    return [...list].sort((a, b) => b.hrv - a.hrv).slice(0, 3);
+  }, [liveTelemetry]);
+
+  // Filter peaks to only those within the current visual viewport/zoom slice
+  const visiblePeaks = React.useMemo(() => {
+    return peaks.filter((peak: any) => 
+      displayedTelemetry.some((item: any) => item.id === peak.id)
+    );
+  }, [peaks, displayedTelemetry]);
+
+  // Custom interactive tooltip rendered when user hovers on telemetry trends in expanded mode
+  const CustomChartTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className={`p-3 max-w-[200px] rounded-xl border shadow-lg backdrop-blur-md font-sans text-[11px] transition-all duration-150 ${
+          isDark 
+            ? "bg-zinc-950/95 border-zinc-800 text-white shadow-black/40" 
+            : "bg-white/95 border-emerald-500/15 text-slate-800 shadow-slate-200/50"
+        }`}>
+          <div className="font-semibold text-slate-400 dark:text-zinc-500 mb-1.5 border-b border-slate-100 dark:border-zinc-800 pb-1.5 flex justify-between items-center">
+            <span className="uppercase tracking-widest text-[9.5px] font-black">Timeline</span>
+            <span className="font-mono text-[9.5px] font-bold">{label}s</span>
+          </div>
+          <div className="space-y-1.5">
+            {payload.map((entry: any, index: number) => {
+              const isBpm = entry.dataKey === "bpm";
+              const isGuidance = entry.dataKey === "guidance";
+              return (
+                <div key={index} className="flex items-center justify-between gap-4">
+                  <span className="flex items-center gap-1.5 text-slate-500 dark:text-zinc-400 font-medium">
+                    <span 
+                      className="w-1.5 h-1.5 rounded-full inline-block shrink-0" 
+                      style={{ backgroundColor: entry.stroke }}
+                    />
+                    <span>{isBpm ? "Heart Rate" : isGuidance ? "Guidance Rhythm" : "Vagal Tone"}</span>
+                  </span>
+                  <span className="font-mono font-bold tabular-nums" style={{ color: entry.stroke }}>
+                    {entry.value}{isBpm ? " BPM" : " ms"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className={`p-1 pt-2 w-full max-w-7xl mx-auto rounded-3xl ${isDark ? "text-white" : ""}`}>
@@ -431,6 +674,14 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
                 >
                   <Info size={16} />
                 </button>
+                <button
+                  id="breathing-expand"
+                  onClick={() => setIsExpanded(true)}
+                  className="p-2.5 rounded-xl border border-emerald-500/10 text-airra-primary bg-emerald-500/5 hover:bg-emerald-500/10 dark:text-emerald-400 max-h-10 transition-all"
+                  title="Expand Fullscreen Biofeedback Monitor"
+                >
+                  <Maximize2 size={16} />
+                </button>
               </div>
             </div>
 
@@ -466,41 +717,82 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
             {/* Dynamic Visual Breathing Circle */}
             <div className="h-64 w-full flex items-center justify-center relative my-4">
               
-              {/* Pulsating background feedback rays */}
+              {/* Outer Circular Progress Track */}
+              <svg className="absolute w-48 h-48 pointer-events-none transform -rotate-90 z-10 overflow-visible">
+                {/* Background Track Circle */}
+                <circle
+                  cx="96"
+                  cy="96"
+                  r="86"
+                  fill="none"
+                  stroke={isDark ? "rgba(255, 255, 255, 0.04)" : "rgba(45, 106, 79, 0.04)"}
+                  strokeWidth="3"
+                />
+                {/* Active Dynamic Progress Arc */}
+                <motion.circle
+                  cx="96"
+                  cy="96"
+                  r="86"
+                  fill="none"
+                  stroke={dynamicColor}
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 86}`}
+                  animate={{ 
+                    pathLength: progressRatio 
+                  }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 40,
+                    damping: 15,
+                    mass: 0.8
+                  }}
+                />
+              </svg>
+
+              {/* Pulsating background feedback rays with dynamic autonomic color shift */}
               {phase !== "ready" && isPlaying && (
                 <motion.div
                   animate={{
                     scale: [visual.scale, visual.scale * 1.15, visual.scale],
-                    opacity: [0.08, 0.22, 0.08]
+                    opacity: [0.08, 0.22, 0.08],
+                    borderColor: dynamicColor
                   }}
                   transition={{
-                    repeat: Infinity,
-                    duration: phase === "hold" ? 1.75 : 3.0,
-                    ease: "easeInOut"
+                    scale: {
+                      repeat: Infinity,
+                      duration: phase === "hold" ? 1.75 : 3.0,
+                      ease: "easeInOut"
+                    },
+                    opacity: {
+                      repeat: Infinity,
+                      duration: phase === "hold" ? 1.75 : 3.0,
+                      ease: "easeInOut"
+                    },
+                    borderColor: { duration: 0.8 }
                   }}
-                  className={`w-32 h-32 rounded-full border border-current absolute transition-colors duration-1000 ${
-                    phase === "inhale" ? "text-teal-400" : phase === "hold" ? "text-amber-400" : "text-indigo-400"
-                  }`}
+                  style={{ color: dynamicColor }}
+                  className="w-32 h-32 rounded-full border absolute transition-colors"
                 />
               )}
 
-              {/* Main Core Target */}
+              {/* Main Core Target with responsive size, color & background dynamics */}
               <motion.div
                 animate={{ 
                   scale: visual.scale,
-                  boxShadow: phase === "inhale" 
-                    ? "0 0 35px rgba(20, 184, 166, 0.2)" 
-                    : phase === "hold"
-                    ? "0 0 45px rgba(245, 158, 11, 0.25)" 
-                    : phase === "exhale"
-                    ? "0 0 25px rgba(99, 102, 241, 0.2)" 
-                    : "0 0 0px rgba(0,0,0,0)"
+                  backgroundColor: dynamicBgColor,
+                  borderColor: dynamicBorderColor,
+                  boxShadow: dynamicBoxShadow,
+                  color: dynamicColor
                 }}
                 transition={{
                   scale: { type: "spring", stiffness: 35, damping: 14, mass: 0.8 },
-                  boxShadow: { type: "spring", stiffness: 35, damping: 14 }
+                  backgroundColor: { duration: 0.8 },
+                  borderColor: { duration: 0.8 },
+                  boxShadow: { type: "spring", stiffness: 35, damping: 14 },
+                  color: { duration: 0.8 }
                 }}
-                className={`w-32 h-32 rounded-full border-2 flex flex-col items-center justify-center relative z-20 transition-colors duration-1000 ${visual.color}`}
+                className="w-32 h-32 rounded-full border-2 flex flex-col items-center justify-center relative z-20"
               >
                 <AnimatePresence mode="wait">
                   <motion.div
@@ -512,13 +804,22 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
                     className="text-center font-mono"
                   >
                     {phase === "ready" ? (
-                      <Wind className="w-10 h-10 text-emerald-600 dark:text-emerald-400 animate-pulse" />
+                      <Wind 
+                        className="w-10 h-10 animate-pulse" 
+                        style={{ color: dynamicColor }} 
+                      />
                     ) : (
                       <>
-                        <div className="text-[9px] font-black uppercase tracking-[0.25em] opacity-50">
+                        <div 
+                          className="text-[9px] font-black uppercase tracking-[0.25em] opacity-60"
+                          style={{ color: dynamicColor }}
+                        >
                           {visual.label}
                         </div>
-                        <div className="text-3xl font-extrabold tracking-tighter mt-0.5">
+                        <div 
+                          className="text-3xl font-extrabold tracking-tighter mt-0.5"
+                          style={{ color: dynamicColor }}
+                        >
                           {visual.progressText}s
                         </div>
                       </>
@@ -527,6 +828,65 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
                 </AnimatePresence>
               </motion.div>
             </div>
+
+            {/* Horizontal Sequential Phase Progress Capsules */}
+            {phase !== "ready" && (
+              <div className="w-full max-w-xs grid grid-cols-3 gap-3.5 px-4 animate-fade-in">
+                {/* Capsule 1: Inhale */}
+                <div className="space-y-1">
+                  <div className="h-1.5 w-full bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden relative border border-slate-200/20 dark:border-white/5">
+                    <motion.div
+                      animate={{
+                        width: phase === "inhale"
+                          ? `${Math.round(((INHALE_DURATION - timeLeft) / INHALE_DURATION) * 100)}%`
+                          : (phase === "hold" || phase === "exhale") ? "100%" : "0%"
+                      }}
+                      transition={{ type: "tween", ease: "linear", duration: 0.1 }}
+                      className="h-full bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.2)] rounded-full"
+                    />
+                  </div>
+                  <div className={`text-[8.5px] font-black uppercase tracking-wider text-center transition-colors duration-300 ${phase === "inhale" ? "text-teal-600 dark:text-teal-400 font-extrabold" : "text-slate-400 dark:text-zinc-500 font-medium"}`}>
+                    Inhale (4s)
+                  </div>
+                </div>
+
+                {/* Capsule 2: Hold */}
+                <div className="space-y-1">
+                  <div className="h-1.5 w-full bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden relative border border-slate-200/20 dark:border-white/5">
+                    <motion.div
+                      animate={{
+                        width: phase === "hold"
+                          ? `${Math.round(((HOLD_DURATION - timeLeft) / HOLD_DURATION) * 100)}%`
+                          : phase === "exhale" ? "100%" : "0%"
+                      }}
+                      transition={{ type: "tween", ease: "linear", duration: 0.1 }}
+                      className="h-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.2)] rounded-full"
+                    />
+                  </div>
+                  <div className={`text-[8.5px] font-black uppercase tracking-wider text-center transition-colors duration-300 ${phase === "hold" ? "text-amber-600 dark:text-amber-400 font-extrabold" : "text-slate-400 dark:text-zinc-500 font-medium"}`}>
+                    Hold (7s)
+                  </div>
+                </div>
+
+                {/* Capsule 3: Exhale */}
+                <div className="space-y-1">
+                  <div className="h-1.5 w-full bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden relative border border-slate-200/20 dark:border-white/5">
+                    <motion.div
+                      animate={{
+                        width: phase === "exhale"
+                          ? `${Math.round(((EXHALE_DURATION - timeLeft) / EXHALE_DURATION) * 100)}%`
+                          : "0%"
+                      }}
+                      transition={{ type: "tween", ease: "linear", duration: 0.1 }}
+                      className="h-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.2)] rounded-full"
+                    />
+                  </div>
+                  <div className={`text-[8.5px] font-black uppercase tracking-wider text-center transition-colors duration-300 ${phase === "exhale" ? "text-indigo-600 dark:text-indigo-400 font-extrabold" : "text-slate-400 dark:text-zinc-500 font-medium"}`}>
+                    Exhale (8s)
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Instruction Context Section */}
             <div className="h-16 flex flex-col items-center justify-center text-center">
@@ -732,6 +1092,128 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
 
           </div>
 
+          {/* HRV Session Target & Goal Progression Section */}
+          <div className="bg-[#E8F0EC]/50 dark:bg-emerald-950/[0.08] p-5 rounded-xl border border-emerald-500/10 flex flex-col md:flex-row items-stretch justify-between gap-6">
+            {/* Controls Side */}
+            <div className="flex-grow space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-emerald-500/10 text-[#2D6A4F] dark:text-emerald-400">
+                  <Target size={16} />
+                </div>
+                <div>
+                  <h5 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200">
+                    Target HRV Session Goal
+                  </h5>
+                  <span className="text-[9.5px] text-slate-400 dark:text-zinc-500 font-medium">
+                    Adjust target milliseconds improvement to trigger vagal feedback loop.
+                  </span>
+                </div>
+              </div>
+
+              {/* Slider and Input combo */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-600 dark:text-zinc-300 font-semibold font-mono">
+                    Target: +{targetHrvImprovement} ms HRV Improvement
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    Baseline: {initialHrv} ms → Target: {initialHrv + targetHrvImprovement} ms
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input 
+                    id="hrv-target-slider"
+                    type="range" 
+                    min="5" 
+                    max="50" 
+                    step="5"
+                    value={targetHrvImprovement} 
+                    onChange={(e) => setTargetHrvImprovement(Number(e.target.value))}
+                    className="flex-1 accent-emerald-700 dark:accent-emerald-400 h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              {/* Preset quick pills */}
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {[10, 20, 30, 40].map((preset) => {
+                  let label = "Gentle";
+                  if (preset === 20) label = "Optimal";
+                  if (preset === 30) label = "Deep Calm";
+                  if (preset === 40) label = "Resonance";
+                  return (
+                    <button
+                      key={preset}
+                      id={`preset-hrv-${preset}`}
+                      onClick={() => setTargetHrvImprovement(preset)}
+                      className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all border ${
+                        targetHrvImprovement === preset
+                          ? "bg-emerald-700 border-emerald-700 text-white dark:bg-emerald-500 dark:border-emerald-500"
+                          : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-white/10"
+                      }`}
+                    >
+                      +{preset} ms ({label})
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Progress Tracker Side */}
+            <div className="w-full md:w-64 bg-white/40 dark:bg-black/10 border border-slate-200/50 dark:border-white/5 p-4 rounded-xl flex flex-col justify-between space-y-3">
+              <div className="flex justify-between items-start text-xs">
+                <div>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-0.5">Session Progress</span>
+                  <span id="current-hrv-improvement" className="font-mono text-base font-extrabold text-slate-800 dark:text-zinc-100">
+                    +{currentImprovement} ms <span className="text-xs font-normal text-slate-400 dark:text-zinc-500">reached</span>
+                  </span>
+                </div>
+                <div>
+                  {goalAchieved ? (
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse flex items-center gap-1">
+                      <Check size={10} strokeWidth={3} /> Goal Achieved!
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {progressPercent}% Complete
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* The Linear Progress Bar */}
+              <div className="space-y-1.5">
+                <div className="w-full bg-slate-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden border border-slate-200/30 dark:border-white/5">
+                  <motion.div 
+                    animate={{ width: `${progressPercent}%` }}
+                    transition={{ type: "spring", stiffness: 45, damping: 15 }}
+                    className={`h-full rounded-full transition-all duration-300 ${
+                      goalAchieved 
+                        ? "bg-gradient-to-r from-emerald-500 to-teal-500 shadow-[0_0_12px_rgba(16,185,129,0.3)] animate-pulse" 
+                        : "bg-emerald-600 dark:bg-emerald-400"
+                    }`}
+                  />
+                </div>
+
+                <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                  <span>Current: +{currentImprovement}ms</span>
+                  <span>Goal: +{targetHrvImprovement}ms</span>
+                </div>
+              </div>
+
+              {/* Micro-encouragement based on progress */}
+              <p className="text-[9.5px] italic text-slate-500 dark:text-zinc-400 leading-snug">
+                {goalAchieved 
+                  ? "Superb! Your lung expansion and visual timer matches vagal balance perfectly. Keep breathing."
+                  : progressPercent > 60
+                  ? "Almost there. Focus on long, relaxed sighs. The vagal reflex is actively stabilizing."
+                  : progressPercent > 20
+                  ? "Nice flow. Your autonomic nervous system is settling. Keep synchronized with the pacer."
+                  : "Let's begin. Relax your throat and stomach. Progress improves with each deep cycle."}
+              </p>
+            </div>
+          </div>
+
           {/* Section 3: Graphical Diagnostics Hub (Tabs + Recharts Wrapper) */}
           <div className="flex-1 flex flex-col bg-slate-50/50 dark:bg-white/[0.01] p-4 rounded-xl border border-slate-100 dark:border-white/5 relative min-h-[260px]">
             
@@ -788,7 +1270,7 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
                 ) : (
                   <div className="w-full h-full min-h-[180px] max-h-[220px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={liveTelemetry} margin={{ top: 10, right: 10, left: -25, bottom: 5 }}>
+                      <LineChart data={liveTelemetry.slice(-15)} margin={{ top: 10, right: 10, left: -25, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#2A2A2A" : "#F1F1F1"} />
                         <XAxis dataKey="time" stroke="#94A3B8" fontSize={9} tickLine={false} />
                         <YAxis stroke="#94A3B8" fontSize={9} domain={[40, 110]} tickLine={false} />
@@ -876,6 +1358,741 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
         </div>
 
       </div>
+
+      {/* Expanded Interactive Fullscreen Overlay */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            id="breathing-mechanics-expanded-overlay"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ type: "spring", duration: 0.45 }}
+            className={`fixed inset-0 z-50 flex flex-col justify-between overflow-y-auto ${
+              isDark 
+                ? "bg-zinc-950/98 text-white text-zinc-100" 
+                : "bg-[#F7F4EF]/98 text-slate-800"
+            } p-6 md:p-12 backdrop-blur-xl`}
+          >
+            {/* Header Suite */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-200/40 dark:border-white/10 pb-6 mb-8 gap-4">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-[#2D6A4F] dark:text-emerald-400">
+                  Efferent Vagal Biofeedback Suite
+                </span>
+                <h2 className="text-2xl md:text-3xl font-display font-black uppercase tracking-tight mt-1">
+                  Cardiorespiratory Coherence Monitor
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 max-w-xl">
+                  Real-time visual monitoring of respiratory sinus arrhythmia (RSA), heart rate variability (HRV) tuning, and autonomic nervous system realignment.
+                </p>
+              </div>
+              
+              <button
+                id="breathing-minimize"
+                onClick={() => setIsExpanded(false)}
+                className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 text-xs font-black uppercase tracking-widest flex items-center gap-2 active:scale-95 transition-all self-end md:self-auto"
+                title="Minimize Biofeedback Overlay"
+              >
+                <Minimize2 size={16} /> Minimize Monitor
+              </button>
+            </div>
+
+            {/* Immersive Grid Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch flex-1">
+              
+              {/* Left Column: Synchronized Visual Respirator Panel */}
+              <div className="lg:col-span-5 flex flex-col justify-between items-center bg-white/40 dark:bg-zinc-900/40 border border-slate-200/50 dark:border-white/5 rounded-2xl p-6 md:p-8 space-y-6">
+                
+                <div className="text-center w-full">
+                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500">
+                    Acoustic Calibration Active
+                  </span>
+                  <div className="flex justify-center gap-2 mt-2">
+                    <button
+                      id="expanded-toggle-sound"
+                      onClick={() => setSoundEnabled(!soundEnabled)}
+                      className="p-2.5 rounded-md border border-emerald-500/10 text-airra-primary bg-emerald-500/5 hover:bg-emerald-500/10 dark:text-emerald-400 transition-all text-xs flex items-center gap-1.5"
+                    >
+                      {soundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+                      <span className="text-[9px] font-bold uppercase tracking-wider">Acoustics: {soundEnabled ? "ON" : "OFF"}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Main Pulsating Visual Stage */}
+                <div className="h-72 w-full flex items-center justify-center relative">
+                  {/* Outer Circular Progress Track */}
+                  <svg className="absolute w-56 h-56 pointer-events-none transform -rotate-90 z-10 overflow-visible">
+                    <circle
+                      cx="112"
+                      cy="112"
+                      r="100"
+                      fill="none"
+                      stroke={isDark ? "rgba(255, 255, 255, 0.04)" : "rgba(45, 106, 79, 0.04)"}
+                      strokeWidth="3.5"
+                    />
+                    <motion.circle
+                      cx="112"
+                      cy="112"
+                      r="100"
+                      fill="none"
+                      stroke={dynamicColor}
+                      strokeWidth="5.5"
+                      strokeLinecap="round"
+                      strokeDasharray={`${2 * Math.PI * 100}`}
+                      animate={{ 
+                        pathLength: progressRatio 
+                      }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 45,
+                        damping: 15,
+                        mass: 0.8
+                      }}
+                    />
+                  </svg>
+
+                  {/* Pulsating background feedback rays */}
+                  {phase !== "ready" && isPlaying && (
+                    <motion.div
+                      animate={{
+                        scale: [visual.scale, visual.scale * 1.18, visual.scale],
+                        opacity: [0.08, 0.24, 0.08],
+                        borderColor: dynamicColor
+                      }}
+                      transition={{
+                        scale: {
+                          repeat: Infinity,
+                          duration: phase === "hold" ? 1.75 : 3.0,
+                          ease: "easeInOut"
+                        },
+                        opacity: {
+                          repeat: Infinity,
+                          duration: phase === "hold" ? 1.75 : 3.0,
+                          ease: "easeInOut"
+                        }
+                      }}
+                      style={{ color: dynamicColor }}
+                      className="w-40 h-40 rounded-full border absolute transition-colors"
+                    />
+                  )}
+
+                  {/* Micro-Target with responsive visual dynamics */}
+                  <motion.div
+                    animate={{ 
+                      scale: visual.scale,
+                      backgroundColor: dynamicBgColor,
+                      borderColor: dynamicBorderColor,
+                      boxShadow: dynamicBoxShadow,
+                      color: dynamicColor
+                    }}
+                    transition={{
+                      scale: { type: "spring", stiffness: 35, damping: 14, mass: 0.8 },
+                      backgroundColor: { duration: 0.8 },
+                      borderColor: { duration: 0.8 },
+                      boxShadow: { type: "spring", stiffness: 35, damping: 14 }
+                    }}
+                    className="w-40 h-40 rounded-full border-2 flex flex-col items-center justify-center relative z-20"
+                  >
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={phase + visual.progressText}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.15 }}
+                        className="text-center font-mono"
+                      >
+                        {phase === "ready" ? (
+                          <Wind 
+                            className="w-14 h-14 animate-pulse mx-auto" 
+                            style={{ color: dynamicColor }} 
+                          />
+                        ) : (
+                          <>
+                            <div 
+                              className="text-[10px] font-black uppercase tracking-[0.25em] opacity-60"
+                              style={{ color: dynamicColor }}
+                            >
+                              {visual.label}
+                            </div>
+                            <div 
+                              className="text-4xl font-extrabold tracking-tighter mt-1"
+                              style={{ color: dynamicColor }}
+                            >
+                              {visual.progressText}s
+                            </div>
+                          </>
+                        )}
+                      </motion.div>
+                    </AnimatePresence>
+                  </motion.div>
+                </div>
+
+                {/* Horizontal sequential capsules for active phase pacing */}
+                {phase !== "ready" && (
+                  <div className="w-full max-w-sm grid grid-cols-3 gap-3.5 px-2">
+                    {/* Capsule 1: Inhale */}
+                    <div className="space-y-1">
+                      <div className="h-1.5 w-full bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden relative border border-slate-200/20 dark:border-white/5">
+                        <motion.div
+                          animate={{
+                            width: phase === "inhale"
+                              ? `${Math.round(((INHALE_DURATION - timeLeft) / INHALE_DURATION) * 100)}%`
+                              : (phase === "hold" || phase === "exhale") ? "100%" : "0%"
+                          }}
+                          transition={{ type: "tween", ease: "linear", duration: 0.1 }}
+                          className="h-full bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.3)] rounded-full"
+                        />
+                      </div>
+                      <div className={`text-[8px] font-black uppercase tracking-wider text-center transition-colors duration-300 ${phase === "inhale" ? "text-teal-600 dark:text-teal-400 font-extrabold" : "text-slate-400 dark:text-zinc-500 font-medium"}`}>
+                        Inhale (4s)
+                      </div>
+                    </div>
+
+                    {/* Capsule 2: Hold */}
+                    <div className="space-y-1">
+                      <div className="h-1.5 w-full bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden relative border border-slate-200/20 dark:border-white/5">
+                        <motion.div
+                          animate={{
+                            width: phase === "hold"
+                              ? `${Math.round(((HOLD_DURATION - timeLeft) / HOLD_DURATION) * 100)}%`
+                              : phase === "exhale" ? "100%" : "0%"
+                          }}
+                          transition={{ type: "tween", ease: "linear", duration: 0.1 }}
+                          className="h-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)] rounded-full"
+                        />
+                      </div>
+                      <div className={`text-[8px] font-black uppercase tracking-wider text-center transition-colors duration-300 ${phase === "hold" ? "text-amber-600 dark:text-amber-400 font-extrabold" : "text-slate-400 dark:text-zinc-500 font-medium"}`}>
+                        Hold (7s)
+                      </div>
+                    </div>
+
+                    {/* Capsule 3: Exhale */}
+                    <div className="space-y-1">
+                      <div className="h-1.5 w-full bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden relative border border-slate-200/20 dark:border-white/5">
+                        <motion.div
+                          animate={{
+                            width: phase === "exhale"
+                              ? `${Math.round(((EXHALE_DURATION - timeLeft) / EXHALE_DURATION) * 100)}%`
+                              : "0%"
+                          }}
+                          transition={{ type: "tween", ease: "linear", duration: 0.1 }}
+                          className="h-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.3)] rounded-full"
+                        />
+                      </div>
+                      <div className={`text-[8px] font-black uppercase tracking-wider text-center transition-colors duration-300 ${phase === "exhale" ? "text-indigo-600 dark:text-indigo-400 font-extrabold" : "text-slate-400 dark:text-zinc-500 font-medium"}`}>
+                        Exhale (8s)
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Descriptive Copywriting Instructions (Design Guide Microcopy) */}
+                <div className="h-14 flex flex-col items-center justify-center text-center max-w-sm">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={phase}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      className="space-y-1"
+                    >
+                      <p className="text-sm font-serif italic text-slate-700 dark:text-zinc-200">
+                        {getMicrocopy()}
+                      </p>
+                      {cycleCount > 0 && (
+                        <div className="text-[8.5px] font-black uppercase tracking-widest text-[#2D6A4F] dark:text-emerald-400 flex items-center justify-center gap-1.5 animate-pulse">
+                          <Sparkles size={11} className="fill-current" />
+                          RESPIRATORY CYCLE {cycleCount} COMPLETE
+                        </div>
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+
+                {/* Direct Control Actions */}
+                <div className="flex gap-3 w-full justify-center">
+                  <button
+                    id="expanded-reset-breathing"
+                    onClick={handleReset}
+                    disabled={phase === "ready"}
+                    className="h-11 px-4 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 transition-all flex items-center gap-1.5 text-slate-500 disabled:opacity-30 disabled:pointer-events-none"
+                  >
+                    <RotateCcw size={13} /> Reset
+                  </button>
+                  
+                  <button
+                    id="expanded-toggle-pacer"
+                    onClick={handleStartStop}
+                    className={`h-11 px-7 rounded-xl text-[9px] font-black uppercase tracking-widest active:scale-95 transition-all flex items-center gap-2 text-white ${
+                      isPlaying 
+                        ? "bg-slate-700 hover:bg-slate-800 dark:bg-zinc-800" 
+                        : "bg-[#2D6A4F] hover:bg-[#1B4332] shadow-sm"
+                    }`}
+                  >
+                    {isPlaying ? (
+                      <>
+                        <Pause size={13} fill="white" /> Pause Pacer
+                      </>
+                    ) : (
+                      <>
+                        <Play size={13} fill="white" className="ml-0.5" /> 
+                        {phase === "ready" ? "Start Breathwork" : "Resume Calibration"}
+                      </>
+                    )}
+                  </button>
+                </div>
+
+              </div>
+
+              {/* Right Column: HRV trends telemetry and deep-dive breathing stats */}
+              <div className="lg:col-span-7 flex flex-col justify-between space-y-6">
+                
+                {/* Visual HRV Resonance Graph */}
+                <div className="bg-white/40 dark:bg-zinc-900/40 border border-slate-200/50 dark:border-white/5 rounded-2xl p-6 flex flex-col h-[340px]">
+                  <div className="flex justify-between items-center mb-4">
+                    <div>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-[#2D6A4F] dark:text-emerald-400">
+                        Visualizing Respiratory Sinus Arrhythmia
+                      </span>
+                      <h4 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200">
+                        Sympathovagal Balancing Trends
+                      </h4>
+                    </div>
+                    {liveTelemetry.length > 0 && (
+                      <span className="text-[10px] bg-[#E8F0EC]/80 dark:bg-emerald-950/40 text-[#2D6A4F] dark:text-emerald-400 border border-emerald-500/10 px-2.5 py-1 rounded-full font-bold uppercase tracking-wider flex items-center gap-1.5 font-mono">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+                        Live Streaming Bio-Data Feed
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Series Visibility Control Bar */}
+                  <div className="flex flex-wrap gap-2 items-center mb-4 pb-3 border-b border-slate-100 dark:border-zinc-800/40 text-[10px]">
+                    <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 dark:text-zinc-500 mr-1">
+                      Data Streams:
+                    </span>
+                    
+                    <button
+                      id="toggle-bpm-series"
+                      onClick={() => setShowBpmSeries(!showBpmSeries)}
+                      className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 border ${
+                        showBpmSeries
+                          ? isDark
+                            ? "bg-rose-500/10 border-rose-500/30 text-rose-400"
+                            : "bg-rose-50 border-rose-200 text-rose-700"
+                          : "bg-slate-50 dark:bg-zinc-800/20 border-slate-200/50 dark:border-zinc-800/50 text-slate-400 dark:text-zinc-600 hover:bg-slate-100 dark:hover:bg-zinc-800/30"
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${showBpmSeries ? "bg-rose-500" : "bg-slate-300 dark:bg-zinc-700"}`} />
+                      Heart Rate (BPM)
+                    </button>
+
+                    <button
+                      id="toggle-hrv-series"
+                      onClick={() => setShowHrvSeries(!showHrvSeries)}
+                      className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 border ${
+                        showHrvSeries
+                          ? isDark
+                            ? "bg-teal-500/10 border-teal-500/30 text-teal-400"
+                            : "bg-teal-50 border-teal-200 text-teal-700"
+                          : "bg-slate-50 dark:bg-zinc-800/20 border-slate-200/50 dark:border-zinc-800/50 text-slate-400 dark:text-zinc-600 hover:bg-slate-100 dark:hover:bg-zinc-800/30"
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${showHrvSeries ? "bg-teal-500" : "bg-slate-300 dark:bg-zinc-700"}`} />
+                      Vagal Tone (HRV)
+                    </button>
+
+                    <button
+                      id="toggle-guidance-path"
+                      onClick={() => setShowGuidancePath(!showGuidancePath)}
+                      className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 border ${
+                        showGuidancePath
+                          ? isDark
+                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                            : "bg-[#E8F0EC] border-emerald-300/60 text-[#2D6A4F] font-bold"
+                            : "bg-slate-50 dark:bg-zinc-800/20 border-slate-200/50 dark:border-zinc-800/50 text-slate-400 dark:text-zinc-600 hover:bg-slate-100 dark:hover:bg-zinc-800/30"
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${showGuidancePath ? "bg-emerald-500 dark:bg-emerald-400 animate-pulse" : "bg-slate-300 dark:bg-zinc-700"}`} />
+                      Guidance Path (Ideal Rhythm)
+                    </button>
+
+                    <button
+                      id="toggle-coherence-peaks"
+                      onClick={() => setShowPeaks(!showPeaks)}
+                      className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 border ${
+                        showPeaks
+                          ? isDark
+                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                            : "bg-emerald-50 border-emerald-200 text-emerald-700"
+                          : "bg-slate-50 dark:bg-zinc-800/20 border-slate-200/50 dark:border-zinc-800/50 text-slate-400 dark:text-zinc-600 hover:bg-slate-100 dark:hover:bg-zinc-800/30"
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${showPeaks ? "bg-emerald-500" : "bg-slate-300 dark:bg-zinc-700"}`} />
+                      Coherence Peaks
+                    </button>
+
+                    <label
+                      htmlFor="toggle-hrv-baseline"
+                      className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-2 border cursor-pointer select-none ${
+                        showBaseline
+                          ? isDark
+                            ? "bg-teal-500/10 border-teal-500/30 text-teal-400 font-bold"
+                            : "bg-[#E8F0EC] border-emerald-300/60 text-[#2D6A4F] font-bold"
+                          : "bg-slate-50 dark:bg-zinc-800/20 border-slate-200/50 dark:border-zinc-800/50 text-slate-400 dark:text-zinc-600 hover:bg-slate-100 dark:hover:bg-zinc-800/30"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        id="toggle-hrv-baseline"
+                        checked={showBaseline}
+                        onChange={(e) => setShowBaseline(e.target.checked)}
+                        className="rounded border-slate-300 dark:border-zinc-750 text-[#2D6A4F] dark:text-teal-400 bg-transparent focus:ring-0 cursor-pointer h-3 w-3 accent-teal-500"
+                      />
+                      <span>HRV Baseline</span>
+                    </label>
+                  </div>
+
+                  <div className="flex-1 w-full flex items-center justify-center">
+                    {liveTelemetry.length === 0 ? (
+                      <div className="text-center p-6 text-slate-400 dark:text-zinc-500 max-w-sm space-y-2">
+                        <Activity className="mx-auto text-emerald-500/40 animate-pulse" size={32} />
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Resonance Loop Active
+                        </p>
+                        <p className="text-[10px] leading-relaxed">
+                          Click "Start Breathwork" to open live telemetry tracks. Heart rate variability (HRV) and heart rate (BPM) will map onto this full-sized vector canvas as you breathe.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="w-full h-full min-h-[220px] flex flex-col justify-between">
+                        <div className="flex-1 w-full min-h-[180px]">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={displayedTelemetry} margin={{ top: 25, right: 25, left: -20, bottom: 5 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#2A2A2A" : "#ECEEEB"} />
+                              <XAxis dataKey="time" stroke="#94A3B8" fontSize={9} tickLine={false} />
+                              <YAxis stroke="#94A3B8" fontSize={9} domain={[40, 110]} tickLine={false} />
+                              <Tooltip content={<CustomChartTooltip />} />
+                              {showBaseline && (
+                                <ReferenceLine
+                                  y={historicalData.length > 0 
+                                    ? Math.round(historicalData.reduce((acc, d) => acc + d.hrv, 0) / historicalData.length) 
+                                    : 58} 
+                                  stroke={isDark ? "rgba(20, 184, 166, 0.45)" : "rgba(45, 106, 79, 0.45)"}
+                                  strokeDasharray="4 4"
+                                  strokeWidth={1.5}
+                                >
+                                  <Label
+                                    value={`7-Day HRV Baseline (${historicalData.length > 0 
+                                      ? Math.round(historicalData.reduce((acc, d) => acc + d.hrv, 0) / historicalData.length) 
+                                      : 58} ms)`}
+                                    position="insideBottomRight"
+                                    offset={6}
+                                    fill={isDark ? "#2DD4BF" : "#0D9488"}
+                                    fontSize={8}
+                                    fontWeight={800}
+                                    className="font-mono tracking-widest text-[8px] uppercase opacity-75"
+                                  />
+                                </ReferenceLine>
+                              )}
+                              {showBpmSeries && (
+                                <Line
+                                  name="BPM (Heart Rate Resonance)"
+                                  type="monotone"
+                                  dataKey="bpm"
+                                  stroke={isDark ? "#FB7185" : "#E11D48"}
+                                  strokeWidth={3}
+                                  dot={false}
+                                  activeDot={{ 
+                                    r: 7, 
+                                    stroke: isDark ? "#FB7185" : "#E11D48", 
+                                    strokeWidth: 2, 
+                                    fill: isDark ? "#09090b" : "#ffffff" 
+                                  }}
+                                />
+                              )}
+                              {showHrvSeries && (
+                                <Line
+                                  name="HRV (Parasympathetic Feedback)"
+                                  type="monotone"
+                                  dataKey="hrv"
+                                  stroke="#14B8A6"
+                                  strokeWidth={3.2}
+                                  dot={false}
+                                  activeDot={{ 
+                                    r: 7, 
+                                    stroke: "#14B8A6", 
+                                    strokeWidth: 2, 
+                                    fill: isDark ? "#09090b" : "#ffffff" 
+                                  }}
+                                />
+                              )}
+                              {showGuidancePath && (
+                                <Line
+                                  name="Optimal Coherence Rhythm"
+                                  type="monotone"
+                                  dataKey="guidance"
+                                  stroke="#10B981"
+                                  strokeDasharray="5 5"
+                                  strokeWidth={2.5}
+                                  dot={false}
+                                  activeDot={{ 
+                                    r: 6, 
+                                    stroke: "#10B981", 
+                                    strokeWidth: 2, 
+                                    fill: isDark ? "#09090b" : "#ffffff" 
+                                  }}
+                                />
+                              )}
+
+                              {/* Physiological Annotations showing when major HRV spikes occur relative to breathing phase */}
+                              {showPeaks && showHrvSeries && visiblePeaks.map((peak: any, idx: number) => (
+                                <ReferenceDot
+                                  key={`coherence-peak-${idx}`}
+                                  x={peak.time}
+                                  y={peak.hrv}
+                                  r={6}
+                                  fill="#2D6A4F"
+                                  stroke="#14B8A6"
+                                  strokeWidth={2}
+                                >
+                                  <Label
+                                    value={`Coherence Peak (${String(peak.phase).toUpperCase()})`}
+                                    position="top"
+                                    offset={10}
+                                    fill={isDark ? "#2DD4BF" : "#0D9488"}
+                                    fontSize={8.5}
+                                    fontWeight={800}
+                                    className="font-sans font-black tracking-wide uppercase"
+                                  />
+                                </ReferenceDot>
+                              ))}
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+
+                        {/* Interactive Range Slider (Zoom subsection of the breathing session) */}
+                        <div id="chart-zoom-controls" className="mt-4 px-2 select-none border-t border-slate-100 dark:border-zinc-800/40 pt-3">
+                          <div className="flex justify-between items-center text-[9.5px] font-mono text-slate-400 dark:text-zinc-500">
+                            <span className="flex items-center gap-1.5 font-bold">
+                              <span>🔍 View Window Segment:</span>
+                              <span className="text-[#2D6A4F] dark:text-emerald-400 font-extrabold bg-[#E8F0EC]/80 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/10">
+                                {zoomRange[0]}% — {zoomRange[1]}%
+                              </span>
+                            </span>
+                            <span>Drag sliders to adjust high-resolution focus</span>
+                          </div>
+
+                          <div className="relative w-full h-2 bg-slate-200/60 dark:bg-zinc-800/60 rounded-full mt-2.5 mb-2.5">
+                            {/* Visual Highlight indicator for active area */}
+                            <div 
+                              className="absolute h-full bg-[#2D6A4F]/25 dark:bg-emerald-400/25 rounded-full transition-all duration-75"
+                              style={{ 
+                                left: `${zoomRange[0]}%`, 
+                                width: `${zoomRange[1] - zoomRange[0]}%` 
+                              }}
+                            />
+                            
+                            {/* Start Handle Input */}
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              value={zoomRange[0]}
+                              onChange={(e) => {
+                                const val = Math.min(Number(e.target.value), zoomRange[1] - 5);
+                                setZoomRange([val, zoomRange[1]]);
+                              }}
+                              className="absolute inset-0 pointer-events-none appearance-none w-full h-full bg-transparent accent-[#2D6A4F] dark:accent-emerald-400 [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto"
+                              id="zoom-slider-start"
+                            />
+                            
+                            {/* End Handle Input */}
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              value={zoomRange[1]}
+                              onChange={(e) => {
+                                const val = Math.max(Number(e.target.value), zoomRange[0] + 5);
+                                setZoomRange([zoomRange[0], val]);
+                              }}
+                              className="absolute inset-0 pointer-events-none appearance-none w-full h-full bg-transparent accent-[#2D6A4F] dark:accent-emerald-400 [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto"
+                              id="zoom-slider-end"
+                            />
+                          </div>
+
+                          <div className="flex justify-between items-center text-[8.5px] font-mono text-slate-400">
+                            <span>0% (Start)</span>
+                            <button
+                              id="reset-expanded-zoom"
+                              onClick={() => setZoomRange([0, 100])}
+                              disabled={zoomRange[0] === 0 && zoomRange[1] === 100}
+                              className="font-black uppercase tracking-widest text-[#2D6A4F] dark:text-emerald-400 disabled:opacity-30 disabled:cursor-not-allowed hover:underline flex items-center gap-1 active:scale-95 transition-all"
+                            >
+                              Reset Zoom View
+                            </button>
+                            <span>100% (End)</span>
+                          </div>
+                        </div>
+
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Real-time Session Goals Tuning Block inside Expanded panel */}
+                <div className="bg-[#E8F0EC]/30 dark:bg-emerald-950/[0.05] p-5 rounded-2xl border border-emerald-500/15">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Target size={15} className="text-[#2D6A4F] dark:text-emerald-400" />
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200">
+                          Active Vagal Stimulation Target
+                        </span>
+                      </div>
+                      <input 
+                        id="expanded-hrv-target-slider"
+                        type="range" 
+                        min="5" 
+                        max="50" 
+                        step="5"
+                        value={targetHrvImprovement} 
+                        onChange={(e) => setTargetHrvImprovement(Number(e.target.value))}
+                        className="w-full accent-emerald-700 dark:accent-emerald-400 h-1.5 bg-slate-200/50 dark:bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+                      />
+                      <div className="flex justify-between items-center text-[10px] text-slate-400 font-mono">
+                        <span>Target: +{targetHrvImprovement} ms HRV boost</span>
+                        <span>Coherence threshold setup</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 sm:w-64 justify-start sm:justify-end items-center content-center pt-2 sm:pt-0">
+                      {[10, 20, 30, 40].map((preset) => (
+                        <button
+                          key={preset}
+                          id={`expanded-preset-hrv-${preset}`}
+                          onClick={() => setTargetHrvImprovement(preset)}
+                          className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all border ${
+                            targetHrvImprovement === preset
+                              ? "bg-emerald-700 border-emerald-700 text-white dark:bg-emerald-500 dark:border-emerald-500"
+                              : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-zinc-400 hover:bg-slate-50 dark:hover:bg-white/10"
+                          }`}
+                        >
+                          +{preset}ms
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Session deep-dive stats 4-bento-grid config */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  
+                  {/* Card 1: Vagal Tone Growth (HRV RMSSD) */}
+                  <div className="bg-[#F7F4EF] dark:bg-zinc-900/40 p-4 rounded-xl border border-emerald-500/5 flex flex-col justify-between min-h-24">
+                    <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-wider text-slate-400">
+                      <span>Vagal Gain</span>
+                      <Activity size={12} className="text-teal-500" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-mono font-black text-teal-600 dark:text-teal-400">
+                        +{currentImprovement}ms
+                      </div>
+                      <div className="text-[9px] text-slate-400 font-bold mt-0.5">
+                        {currentImprovement >= targetHrvImprovement ? "✓ Target Hit!" : `Goal: +${targetHrvImprovement}ms`}
+                      </div>
+                    </div>
+                    <div className="text-[8px] text-slate-400">
+                      Average: {statAverageHrv}ms
+                    </div>
+                  </div>
+
+                  {/* Card 2: Pulse Variance (BPM) */}
+                  <div className="bg-[#F7F4EF] dark:bg-zinc-900/40 p-4 rounded-xl border border-emerald-500/5 flex flex-col justify-between min-h-24">
+                    <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-wider text-slate-400">
+                      <span>Pulse Drift</span>
+                      <motion.div
+                        animate={{ scale: [1, 1.25, 1] }}
+                        transition={{ repeat: Infinity, duration: parseFloat(pulseDuration), ease: "easeInOut" }}
+                        className="text-rose-500"
+                      >
+                        <Heart size={12} className="fill-current" />
+                      </motion.div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-mono font-black text-slate-800 dark:text-zinc-100">
+                        {biometrics.bpm}
+                      </div>
+                      <div className="text-[9px] text-slate-400 font-bold mt-0.5">
+                        Min: {statLowestBpm} / Max: {statPeakBpm}
+                      </div>
+                    </div>
+                    <div className="text-[8px] text-slate-400">
+                      Resonant RSA active
+                    </div>
+                  </div>
+
+                  {/* Card 3: Neural Coherence Ratio */}
+                  <div className="bg-[#F7F4EF] dark:bg-zinc-900/40 p-4 rounded-xl border border-emerald-500/5 flex flex-col justify-between min-h-24">
+                    <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-wider text-slate-400">
+                      <span>Coherence</span>
+                      <Sparkles size={12} className="text-amber-500" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-mono font-black text-amber-600 dark:text-amber-400">
+                        {biometrics.coherence}%
+                      </div>
+                      <div className="text-[9px] text-amber-600 dark:text-amber-400 font-bold mt-0.5 uppercase tracking-wide">
+                        {biometrics.coherence > 18 ? "Optimal Resonance" : biometrics.coherence > 10 ? "Moderate Flow" : "Calibrating"}
+                      </div>
+                    </div>
+                    <div className="text-[8px] text-slate-400">
+                      Average: {statAverageCoherence}%
+                    </div>
+                  </div>
+
+                  {/* Card 4: Resp Dynamics */}
+                  <div className="bg-[#F7F4EF] dark:bg-zinc-900/40 p-4 rounded-xl border border-emerald-500/5 flex flex-col justify-between min-h-24">
+                    <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-wider text-slate-400">
+                      <span>Respiration Stats</span>
+                      <Clock size={12} className="text-indigo-500" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-mono font-black text-indigo-600 dark:text-indigo-400">
+                        {formatDuration(sessionDurationSec)}
+                      </div>
+                      <div className="text-[9px] text-slate-400 font-bold mt-0.5">
+                        Cycles: {cycleCount}
+                      </div>
+                    </div>
+                    <div className="text-[8px] text-slate-400">
+                      Autonomic realignment
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* Footer Status Indicators */}
+            <div className="flex justify-between items-center border-t border-slate-200/40 dark:border-white/10 pt-4 mt-8 text-[9px] text-slate-400 dark:text-zinc-500 font-mono">
+              <span className="flex items-center gap-1.5 p-1 px-3 border border-slate-200/30 dark:border-white/5 rounded-lg bg-slate-50/50 dark:bg-zinc-900/10">
+                <ShieldCheck size={13} className="text-emerald-500" />
+                Dual-channel proxy real-time biosensor loop (v1.1) • End-to-end local security active
+              </span>
+              <span>
+                SYSTEM STATE: {phase === "ready" ? "STANDBY" : `${phase.toUpperCase()} ACTIVATED`}
+              </span>
+            </div>
+
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
