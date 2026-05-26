@@ -8,6 +8,7 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   signInAsTestUser: () => void;
+  signInWithGoogleMock: (email: string, name: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,14 +22,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const isTestMode = localStorage.getItem('test_mode') === 'true';
     if (isTestMode) {
+      const email = localStorage.getItem('mock_email') || 'test@example.com';
+      const name = localStorage.getItem('mock_name') || 'Test User';
+      const avatarUrl = localStorage.getItem('mock_avatar') || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`;
       const mockUser = {
         id: 'test-user-id',
-        email: 'test@example.com',
-        user_metadata: { full_name: 'Test User' },
+        email: email,
+        user_metadata: { 
+          full_name: name,
+          avatar_url: avatarUrl,
+          provider: localStorage.getItem('mock_provider') || 'email'
+        },
         aud: 'authenticated',
         role: 'authenticated'
       } as any;
       setUser(mockUser);
+      setSession({ user: mockUser } as any);
       setLoading(false);
     }
   }, []);
@@ -74,6 +83,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     localStorage.removeItem('test_mode');
+    localStorage.removeItem('mock_email');
+    localStorage.removeItem('mock_name');
+    localStorage.removeItem('mock_avatar');
+    localStorage.removeItem('mock_provider');
     if (supabase) {
       await supabase.auth.signOut();
     }
@@ -83,10 +96,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInAsTestUser = () => {
     localStorage.setItem('test_mode', 'true');
+    localStorage.setItem('mock_email', 'test@example.com');
+    localStorage.setItem('mock_name', 'Test User');
+    localStorage.setItem('mock_avatar', `https://api.dicebear.com/7.x/initials/svg?seed=Test%20User`);
+    localStorage.setItem('mock_provider', 'email');
     const mockUser = {
       id: 'test-user-id',
       email: 'test@example.com',
-      user_metadata: { full_name: 'Test User' },
+      user_metadata: { 
+        full_name: 'Test User',
+        avatar_url: `https://api.dicebear.com/7.x/initials/svg?seed=Test%20User`,
+        provider: 'email'
+      },
+      aud: 'authenticated',
+      role: 'authenticated'
+    } as any;
+    setUser(mockUser);
+    setSession({ user: mockUser } as any);
+  };
+
+  const signInWithGoogleMock = (email: string, name: string) => {
+    localStorage.setItem('test_mode', 'true');
+    localStorage.setItem('mock_email', email);
+    localStorage.setItem('mock_name', name);
+    localStorage.setItem('mock_avatar', `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`);
+    localStorage.setItem('mock_provider', 'google');
+    const mockUser = {
+      id: 'test-google-id-' + Math.random().toString(36).substring(2, 9),
+      email: email,
+      user_metadata: { 
+        full_name: name,
+        avatar_url: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`,
+        provider: 'google'
+      },
       aud: 'authenticated',
       role: 'authenticated'
     } as any;
@@ -95,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut, signInAsTestUser }}>
+    <AuthContext.Provider value={{ user, session, loading, signOut, signInAsTestUser, signInWithGoogleMock }}>
       {children}
     </AuthContext.Provider>
   );

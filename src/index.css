@@ -1,6 +1,77 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600;700;800;900&family=Syne:wght@400;700;800&display=swap');
 @import "tailwindcss";
 
+:root {
+  --side-padding: clamp(16px, 5vw, 28px);
+  --top-padding: clamp(20px, 6vh, 40px);
+}
+
+/* Universal Layout Safety and Responsiveness */
+body, html { 
+  overflow-x: hidden; 
+}
+
+* { 
+  box-sizing: border-box; 
+}
+
+img, video { 
+  max-width: 100%; 
+  height: auto;
+}
+
+.screen-container {
+  min-height: 100dvh;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 80px); /* 80px = nav bar height */
+  padding-left: var(--side-padding);
+  padding-right: var(--side-padding);
+  padding-top: var(--top-padding);
+}
+
+.page-container {
+  padding-left: var(--side-padding) !important;
+  padding-right: var(--side-padding) !important;
+}
+
+.page-container > *, .page-container section {
+  padding-left: var(--side-padding);
+  padding-right: var(--side-padding);
+}
+
+/* Ensure no negative margins pull content left of screen edge */
+.page-container,section, div, p, h1, h2, h3 {
+  margin-left: max(0px, inherit);
+}
+
+/* All hero titles capped responsive size */
+h1 {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: clamp(2.4rem, 10vw, 4.5rem) !important;
+}
+
+/* Global low-contrast text fix under Dark Theme */
+.dark .content-text, 
+.dark .body-text, 
+.dark p, 
+.dark span:not(.force-dark), 
+.dark label {
+  color: var(--text-primary, rgba(255, 255, 255, 0.87)) !important;
+}
+
+/* Force body paragraph text on dark backgrounds */
+.dark p {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+/* Soft light background containment if text has to stay dark */
+.stay-dark-contained {
+  background: rgba(255, 255, 255, 0.92) !important;
+  color: #0a1a10 !important;
+  padding: 2px 8px; 
+  border-radius: 4px;
+}
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Outfit", sans-serif;

@@ -17,10 +17,12 @@ import {
   Leaf,
   Droplets,
   Waves,
-  Activity
+  Activity,
+  X
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import BreathingTimer from "@/src/components/BreathingTimer";
+import { synther } from "../lib/synthEngine";
 
 const EXPERIENCES = [
   {
@@ -77,6 +79,13 @@ const EXPERIENCES = [
   }
 ];
 
+const SOUND_TRACKS: Record<string, string> = {
+  Rainfall: "https://assets.mixkit.co/music/preview/mixkit-forest-rain-with-birds-and-creek-1215.mp3",
+  "Soft Wind": "https://assets.mixkit.co/music/preview/mixkit-wind-blowing-through-trees-1221.mp3",
+  "Cave Reverb": "https://assets.mixkit.co/music/preview/mixkit-ethereal-tech-475.mp3",
+  "Ocean Sync": "https://assets.mixkit.co/music/preview/mixkit-wellness-vibe-305.mp3"
+};
+
 export default function WellnessPage() {
   const [selectedExp, setSelectedExp] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -84,26 +93,136 @@ export default function WellnessPage() {
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
   const oscillatorUrl = "https://assets.mixkit.co/music/preview/mixkit-ethereal-tech-475.mp3";
 
+  // sound tile active states
+  const [activeSound, setActiveSound] = useState<string | null>(null);
+  const [soundPlaying, setSoundPlaying] = useState(false);
+  const soundRef = React.useRef<HTMLAudioElement | null>(null);
+
+  // oscillator calibration controls
+  const [isOscillatorConfigOpen, setIsOscillatorConfigOpen] = useState(false);
+  const [carrierFreq, setCarrierFreq] = useState(136.1);
+  const [targetFreq, setTargetFreq] = useState(8.5);
+  const [hemisphericRatio, setHemisphericRatio] = useState(50);
+
+  const handleSelectSound = async (label: string) => {
+    try {
+      await fetch("/api/session/sound", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: label.toLowerCase().replace(" ", "_") })
+      });
+    } catch (e) {
+      console.warn("POST /api/session/sound failed but continuing locally:", e);
+    }
+
+    if (activeSound === label) {
+      if (soundPlaying) {
+        if (soundRef.current) {
+          soundRef.current.pause();
+        }
+        synther.stop();
+        setSoundPlaying(false);
+      } else {
+        if (soundRef.current) {
+          soundRef.current.play().then(() => {
+            setSoundPlaying(true);
+          }).catch(err => {
+            console.warn("Retrying native sound failed. Using live synthesis fallback:", err);
+            synther.start(label);
+            setSoundPlaying(true);
+          });
+        } else {
+          synther.start(label);
+          setSoundPlaying(true);
+        }
+      }
+    } else {
+      if (soundRef.current) {
+        soundRef.current.pause();
+      }
+      synther.stop();
+      
+      const newUrl = SOUND_TRACKS[label];
+      if (newUrl) {
+        const audio = new Audio(newUrl);
+        audio.loop = true;
+        soundRef.current = audio;
+        
+        audio.onerror = (e) => {
+          console.warn(`[Wellness Soundscape] failed to load ${newUrl}. Initiating live synthesis fallback.`);
+          synther.start(label);
+          setSoundPlaying(true);
+        };
+
+        audio.play().then(() => {
+          setSoundPlaying(true);
+        }).catch(err => {
+          console.warn("[Wellness Soundscape] Play blocked or offline. Activating live synthesis fallback:", err);
+          synther.start(label);
+          setSoundPlaying(true);
+        });
+        setActiveSound(label);
+      }
+    }
+  };
+
+  React.useEffect(() => {
+    return () => {
+      if (soundRef.current) {
+        soundRef.current.pause();
+      }
+      synther.stop();
+    };
+  }, []);
+
   const togglePlay = (expId: string, audioUrl: string, e: React.MouseEvent) => {
     e.stopPropagation();
     
     if (activeAudioId === expId) {
       if (isPlaying) {
-        audioRef.current?.pause();
+        if (audioRef.current) {
+          audioRef.current.pause();
+        }
+        synther.stop();
         setIsPlaying(false);
       } else {
-        audioRef.current?.play();
-        setIsPlaying(true);
+        if (audioRef.current) {
+          audioRef.current.play().then(() => {
+            setIsPlaying(true);
+          }).catch(err => {
+            console.warn("Autoplay blocked. Resuming via synthesized waves:", err);
+            synther.start(expId);
+            setIsPlaying(true);
+          });
+        } else {
+          synther.start(expId);
+          setIsPlaying(true);
+        }
       }
     } else {
       if (audioRef.current) {
         audioRef.current.pause();
       }
+      synther.stop();
+      
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
-      audio.play();
+      
+      audio.onerror = () => {
+        console.warn(`[Wellness Experience] failed to load ${audioUrl}. Activating bio-harmonic synthesizer fallback.`);
+        synther.start(expId);
+        setIsPlaying(true);
+      };
+
+      audio.play().then(() => {
+        setIsPlaying(true);
+      }).catch(err => {
+        console.warn("[Wellness Experience] Play prevented. Activating bio-harmonic synthesizer fallback:", err);
+        synther.start(expId);
+        setIsPlaying(true);
+      });
+      
       setActiveAudioId(expId);
-      setIsPlaying(true);
       
       audio.onended = () => {
         setIsPlaying(false);
@@ -117,6 +236,7 @@ export default function WellnessPage() {
       if (audioRef.current) {
         audioRef.current.pause();
       }
+      synther.stop();
     };
   }, []);
 
@@ -232,15 +352,21 @@ export default function WellnessPage() {
 
          <div className="relative z-10 flex-grow space-y-12">
             <div className="space-y-4">
-               <h3 className="text-6xl font-display font-black uppercase tracking-tighter leading-none">Neural Wave <br /> Oscillator.</h3>
-               <p className="text-xl font-medium opacity-60 leading-relaxed max-w-xl italic">Generate real-time binaural soundscapes optimized for your current diagnostic metrics.</p>
+               <h3 
+                 onClick={() => setIsOscillatorConfigOpen(true)}
+                 className="text-3xl sm:text-4xl md:text-5xl font-display font-black uppercase tracking-tighter leading-none cursor-pointer hover:text-emerald-500 dark:hover:text-[#3DB88A] transition-colors flex items-center gap-3 select-none flex-wrap whitespace-normal overflow-hidden"
+               >
+                 Neural Wave Oscillator.
+                 <span className="text-[9px] font-black tracking-widest text-[#3DB88A] bg-[#3DB88A]/10 border border-[#3DB88A]/20 px-2.5 py-1 rounded-full uppercase animate-pulse">Configure</span>
+               </h3>
+               <p className="text-lg md:text-xl font-medium opacity-60 leading-relaxed max-w-xl italic">Generate real-time binaural soundscapes optimized for your current diagnostic metrics. Click title to calibrate oscillators.</p>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-               <AudioAction icon={<Cloud />} label="Rainfall" />
-               <AudioAction icon={<Leaf />} label="Soft Wind" />
-               <AudioAction icon={<Droplets />} label="Cave Reverb" />
-               <AudioAction icon={<Waves />} label="Ocean Sync" />
+               <AudioAction icon={<Cloud />} label="Rainfall" isActive={activeSound === "Rainfall"} isPlaying={soundPlaying} onSelect={() => handleSelectSound("Rainfall")} />
+               <AudioAction icon={<Leaf />} label="Soft Wind" isActive={activeSound === "Soft Wind"} isPlaying={soundPlaying} onSelect={() => handleSelectSound("Soft Wind")} />
+               <AudioAction icon={<Droplets />} label="Cave Reverb" isActive={activeSound === "Cave Reverb"} isPlaying={soundPlaying} onSelect={() => handleSelectSound("Cave Reverb")} />
+               <AudioAction icon={<Waves />} label="Ocean Sync" isActive={activeSound === "Ocean Sync"} isPlaying={soundPlaying} onSelect={() => handleSelectSound("Ocean Sync")} />
             </div>
 
             <div className="space-y-6 pt-10 border-t border-airra-bg/10 dark:border-zinc-200">
@@ -405,17 +531,162 @@ export default function WellnessPage() {
           );
         })()}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {isOscillatorConfigOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsOscillatorConfigOpen(false)}
+              className="fixed inset-0 bg-zinc-950/80 backdrop-blur-md z-[100] cursor-pointer"
+            />
+            <motion.div 
+              initial={{ x: "100%", opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "100%", opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 right-0 w-full sm:w-[480px] bg-zinc-950 border-l border-white/5 z-[110] p-10 flex flex-col justify-between text-white shadow-2xl overflow-y-auto"
+            >
+              <div className="space-y-8">
+                 <div className="flex justify-between items-center">
+                    <span className="text-[9px] font-black tracking-[0.3em] text-[#3DB88A] bg-[#3DB88A]/10 border border-[#3DB88A]/20 px-2.5 py-1 rounded-full">CALIBRATOR CONSOLE</span>
+                    <button 
+                      onClick={() => setIsOscillatorConfigOpen(false)}
+                      className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+                    >
+                      <X size={18} />
+                    </button>
+                 </div>
+                 <div className="space-y-2">
+                    <h2 className="text-4xl font-display font-black uppercase tracking-tighter text-white leading-none">OSCILLATOR <br /> CONFIG.</h2>
+                    <p className="text-xs text-zinc-400 leading-relaxed italic">Tune the carrier waves and binaural beats offset directly against your active biometric link.</p>
+                 </div>
+
+                 <div className="space-y-10 pt-8 border-t border-white/5">
+                    {/* Carrier wave */}
+                    <div className="space-y-4">
+                       <div className="flex justify-between items-center">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-[#3DB88A]">Carrier Frequency</label>
+                          <span className="text-xs font-mono font-bold">{carrierFreq} Hz (Solfeggio)</span>
+                       </div>
+                       <input 
+                         type="range"
+                         min="100"
+                         max="528"
+                         step="0.1"
+                         value={carrierFreq}
+                         onChange={(e) => setCarrierFreq(parseFloat(e.target.value))}
+                         className="w-full accent-[#3DB88A] bg-zinc-800"
+                       />
+                       <div className="flex justify-between text-[8px] font-black tracking-widest text-zinc-500 uppercase">
+                          <span>174 Hz (Ground)</span>
+                          <span>285 Hz (Cell)</span>
+                          <span>528 Hz (Repair)</span>
+                       </div>
+                    </div>
+
+                    {/* Binaural beat target */}
+                    <div className="space-y-4">
+                       <div className="flex justify-between items-center">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-[#3DB88A]">Binaural Offset</label>
+                          <span className="text-xs font-mono font-bold">{targetFreq} Hz ({targetFreq < 4 ? 'Delta' : targetFreq < 8 ? 'Theta' : targetFreq < 12 ? 'Alpha' : 'Beta'})</span>
+                       </div>
+                       <input 
+                         type="range"
+                         min="1"
+                         max="20"
+                         step="0.1"
+                         value={targetFreq}
+                         onChange={(e) => setTargetFreq(parseFloat(e.target.value))}
+                         className="w-full accent-[#3DB88A] bg-zinc-800"
+                       />
+                       <div className="flex justify-between text-[8px] font-black tracking-widest text-zinc-500 uppercase">
+                          <span>Delta (1-4Hz)</span>
+                          <span>Theta (4-8Hz)</span>
+                          <span>Alpha (8-12Hz)</span>
+                          <span>Beta (12-20Hz)</span>
+                       </div>
+                    </div>
+
+                    {/* Hemispheric ratio */}
+                    <div className="space-y-4">
+                       <div className="flex justify-between items-center">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-[#3DB88A]">Hemispheric Synchronization</label>
+                          <span className="text-xs font-mono font-bold">{hemisphericRatio}:{100 - hemisphericRatio} L/R</span>
+                       </div>
+                       <input 
+                         type="range"
+                         min="0"
+                         max="100"
+                         value={hemisphericRatio}
+                         onChange={(e) => setHemisphericRatio(parseInt(e.target.value))}
+                         className="w-full accent-[#3DB88A] bg-zinc-800 animate-none cursor-pointer"
+                       />
+                    </div>
+                 </div>
+              </div>
+
+              <div className="pt-10 border-t border-white/5 flex gap-4">
+                 <button 
+                   onClick={() => setIsOscillatorConfigOpen(false)}
+                   className="flex-1 h-14 bg-[#3DB88A] text-zinc-950 font-black uppercase tracking-widest text-[9px] rounded-2xl shadow-[0_4px_20px_rgba(61,184,138,0.25)] hover:bg-[#3DB88A]/95 hover:-translate-y-px transition-all cursor-pointer"
+                 >
+                   Lock Alignment
+                 </button>
+                 <button 
+                   onClick={() => {
+                     setCarrierFreq(136.1);
+                     setTargetFreq(8.5);
+                     setHemisphericRatio(50);
+                   }}
+                   className="h-14 px-6 bg-white/5 hover:bg-white/10 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest border border-white/10 cursor-pointer"
+                 >
+                   Reset
+                 </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-function AudioAction({ icon, label }: { icon: React.ReactNode, label: string }) {
+function AudioAction({ icon, label, isActive, isPlaying, onSelect }: { icon: React.ReactNode, label: string, isActive: boolean, isPlaying: boolean, onSelect: () => void }) {
   return (
-    <button className="flex flex-col items-center gap-4 p-6 rounded-3xl airra-bg dark:bg-zinc-800 hover:bg-white dark:hover:bg-zinc-200 transition-all group">
-       <div className="w-12 h-12 flex items-center justify-center text-airra-muted group-hover:text-airra-primary transition-colors">
+    <button 
+      onClick={onSelect}
+      className={`flex flex-col items-center gap-4 p-6 rounded-3xl transition-all duration-500 relative overflow-hidden active:scale-[0.96] border-2 cursor-pointer w-full group ${
+        isActive 
+          ? 'bg-emerald-500/15 dark:bg-emerald-400/5 text-[#3DB88A] border-[#3DB88A] shadow-[0_0_20px_rgba(61,184,138,0.2)]' 
+          : 'bg-airra-bg dark:bg-zinc-800 border-transparent text-airra-muted hover:bg-white dark:hover:bg-zinc-800/10'
+      }`}
+    >
+       <div className={`w-12 h-12 flex items-center justify-center transition-all ${
+         isActive ? 'text-[#3DB88A] scale-110 drop-shadow-[0_0_8px_rgba(61,184,138,0.6)] animate-pulse' : 'text-zinc-400 group-hover:text-white'
+       }`}>
           {React.cloneElement(icon as React.ReactElement, { size: 28 })}
        </div>
-       <span className="text-[9px] font-black uppercase tracking-widest text-airra-muted group-hover:text-airra-text dark:group-hover:text-zinc-900">{label}</span>
+       <span className={`text-[9px] font-black uppercase tracking-widest leading-none mt-1 ${
+         isActive ? 'text-[#3DB88A]' : 'text-airra-muted group-hover:text-airra-text'
+       }`}>{label}</span>
+
+       {/* Waveform indicator */}
+       {isActive && isPlaying && (
+         <div className="absolute bottom-2.5 left-0 right-0 flex justify-center items-end gap-[2px] h-3">
+           {[1, 2, 3, 4, 5].map((i) => (
+             <span 
+               key={i} 
+               className="w-[1.5px] bg-[#3DB88A] rounded-full animate-pulse" 
+               style={{ 
+                 height: `${Math.sin(i + 1) * 6 + 7}px`
+               }} 
+             />
+           ))}
+         </div>
+       )}
     </button>
   );
 }

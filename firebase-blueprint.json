@@ -1,0 +1,42 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile containing basic metadata and settings",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "fullName": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "onboardingCompleted": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "email"]
+    },
+    "WorkspaceSync": {
+      "title": "WorkspaceSync",
+      "description": "Metadata logs of Workspace Sheets, Gmail, and Calendar syncs",
+      "type": "object",
+      "properties": {
+        "syncId": { "type": "string" },
+        "userId": { "type": "string" },
+        "service": { "type": "string" },
+        "status": { "type": "string", "enum": ["success", "failed"] },
+        "recordsSyncedCount": { "type": "number" },
+        "lastSyncedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["syncId", "userId", "service", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Custom verified user profile records"
+    },
+    "/users/{userId}/syncs/{syncId}": {
+      "schema": "WorkspaceSync",
+      "description": "Workspace sync histories"
+    }
+  }
+}

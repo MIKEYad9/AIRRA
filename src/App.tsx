@@ -18,6 +18,10 @@ import Community from "@/src/pages/Community";
 import JournalHistory from "@/src/pages/JournalHistory";
 import WellnessPage from "@/src/pages/Wellness";
 import AppLayout from "@/src/components/AppLayout";
+import DiagnosticScreen from "@/src/pages/DiagnosticScreen";
+import SavedSessions from "@/src/pages/SavedSessions";
+import Profile from "@/src/pages/Profile";
+import WorkspacePortal from "@/src/pages/WorkspacePortal";
 
 export default function App() {
   return (
@@ -85,6 +89,38 @@ export default function App() {
                 element={
                   <ProtectedRoute>
                     <AppLayout><Dashboard /></AppLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/diagnostic" 
+                element={
+                  <ProtectedRoute>
+                    <AppLayout><DiagnosticScreen /></AppLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/saved" 
+                element={
+                  <ProtectedRoute>
+                    <AppLayout><SavedSessions /></AppLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/workspace" 
+                element={
+                  <ProtectedRoute>
+                    <AppLayout><WorkspacePortal /></AppLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/profile" 
+                element={
+                  <ProtectedRoute>
+                    <AppLayout><Profile /></AppLayout>
                   </ProtectedRoute>
                 } 
               />

@@ -322,7 +322,12 @@ export default function Consultation() {
         </div>
       ) : (
         <div className="space-y-16">
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+           <motion.div 
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12"
+           >
               <ReportCard 
                 title="Neuro-Wellness Assessment"
                 date="May 12, 2026"
@@ -338,15 +343,15 @@ export default function Consultation() {
                 date="April 28, 2026"
                 id="SAR-4829-09"
               />
-           </div>
+           </motion.div>
            
-           <div className="p-16 airra-card bg-airra-text dark:bg-white text-airra-bg dark:text-zinc-950 flex flex-col md:flex-row items-center justify-between gap-12 overflow-hidden relative">
+           <div className="p-6 sm:p-10 md:p-14 lg:p-16 airra-card bg-airra-text dark:bg-white text-airra-bg dark:text-zinc-950 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-8 sm:gap-10 md:gap-12 overflow-hidden relative">
               <div className="absolute top-0 right-0 w-80 h-80 bg-airra-primary blur-[120px] opacity-10 pointer-events-none" />
               <div className="space-y-4 relative z-10">
-                <h3 className="text-5xl font-display font-black uppercase tracking-tighter leading-none">Comprehensive <br /> PDF Synthesis.</h3>
-                <p className="font-medium opacity-60 text-lg">Generate a complete longitudinal study of your neural evolution for clinical export.</p>
+                <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-black uppercase tracking-tighter leading-tight md:leading-none break-words">Comprehensive <br className="hidden sm:inline" /> PDF Synthesis.</h3>
+                <p className="font-medium opacity-60 text-sm sm:text-base md:text-lg max-w-xl leading-relaxed">Generate a complete longitudinal study of your neural evolution for clinical export.</p>
               </div>
-              <button className="h-20 px-12 rounded-[2rem] bg-airra-primary dark:bg-airra-dark-glow text-white dark:text-zinc-950 text-[10px] font-black uppercase tracking-[0.3em] shadow-airra-xl hover:scale-105 transition-all relative z-10">
+              <button className="h-14 sm:h-16 md:h-20 px-6 sm:px-10 md:px-12 w-full md:w-auto rounded-xl sm:rounded-[2rem] bg-airra-primary dark:bg-airra-dark-glow text-white dark:text-zinc-950 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] shadow-airra-xl hover:scale-105 transition-all relative z-10 whitespace-normal sm:whitespace-nowrap flex items-center justify-center flex-shrink-0">
                 Generate Full Vault PDF
               </button>
            </div>
@@ -356,10 +361,36 @@ export default function Consultation() {
   );
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.05
+    }
+  }
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 30, scale: 0.96 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 90,
+      damping: 14
+    }
+  }
+};
+
 function ReportCard({ title, date, id }: { title: string, date: string, id: string }) {
   return (
     <motion.div 
-      whileHover={{ y: -8 }}
+      variants={cardVariants}
+      whileHover={{ y: -8, transition: { duration: 0.2 } }}
       className="airra-card p-12 space-y-10 group"
     >
        <div className="flex justify-between items-start">

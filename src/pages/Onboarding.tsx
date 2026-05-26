@@ -151,7 +151,7 @@ export default function Onboarding() {
         {currentStep === 4 && (
           <motion.div
             key="step4"
-            className="relative z-10 w-full max-w-3xl text-center space-y-16"
+            className="relative z-10 w-full max-w-3xl text-center space-y-16 overflow-hidden break-words px-4"
           >
              <div className="flex justify-center">
                 <motion.div 
@@ -165,7 +165,7 @@ export default function Onboarding() {
                 </motion.div>
              </div>
              <div className="space-y-6">
-                <h2 className="text-5xl font-display font-black text-airra-text dark:text-white uppercase tracking-tighter animate-pulse">Personalizing <br /> Your Safe Space...</h2>
+                <h2 className="text-[clamp(2rem,8vw,3.5rem)] font-display font-black text-airra-text dark:text-white uppercase tracking-tighter animate-pulse leading-[0.95] sm:leading-[0.85]">Personalizing <br /> Your Safe <br /> Space...</h2>
                 <p className="text-airra-muted dark:text-airra-dark-muted font-medium text-xl italic max-w-md mx-auto">
                    Synchronizing diagnostic models with your chosen neural objectives.
                 </p>

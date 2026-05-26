@@ -8,7 +8,7 @@ export default function Navbar() {
   const location = useLocation();
 
   // Hide main nav if in dashboard or any app shell page
-  const appShellRoutes = ['/dashboard', '/journals', '/consultation', '/analytics', '/community', '/profile', '/onboarding'];
+  const appShellRoutes = ['/dashboard', '/journals', '/consultation', '/analytics', '/community', '/onboarding', '/workspace'];
   const isExcluded = appShellRoutes.some(route => location.pathname.startsWith(route)) || location.pathname === '/login' || location.pathname === '/';
   if (isExcluded) return null;
 
@@ -16,14 +16,21 @@ export default function Navbar() {
     <motion.nav 
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-8 mx-auto max-w-7xl"
+      className="sticky top-0 left-0 right-0 z-[100] bg-airra-bg/95 dark:bg-airra-dark-bg/95 backdrop-blur-md border-b border-airra-border/20 dark:border-white/5 flex items-center justify-between px-8 py-5 w-full mx-auto"
     >
-      <Link to="/" className="flex items-center gap-2 group">
-        <div className="flex items-center justify-center p-2.5 rounded-2xl bg-airra-text dark:bg-white shadow-xl shadow-black/5 group-hover:scale-110 transition-all">
-          <Sparkles className="w-5 h-5 text-airra-bg dark:text-zinc-950" />
-        </div>
-        <span className="text-xl font-display font-black tracking-tighter text-airra-text dark:text-white uppercase">Airra</span>
-      </Link>
+      <div className="flex flex-col items-start gap-1">
+        <Link to="/" className="flex items-center gap-2 group">
+          <div className="flex items-center justify-center p-2.5 rounded-2xl bg-airra-text dark:bg-white shadow-xl shadow-black/5 group-hover:scale-110 transition-all">
+            <Sparkles className="w-5 h-5 text-airra-bg dark:text-zinc-950" />
+          </div>
+          <span className="text-xl font-display font-black tracking-tighter text-airra-text dark:text-white uppercase">Airra</span>
+        </Link>
+        {location.pathname === '/saved' && (
+          <div className="text-[11px] font-mono font-bold text-[#3DB88A] tracking-[0.1em] uppercase mt-1 pl-1 whitespace-nowrap">
+            OFFLINE SANCTUARY MODE
+          </div>
+        )}
+      </div>
 
       <div className="hidden px-1 py-1 rounded-full md:flex airra-glass border-airra-border/50">
         <Link to="/" className="px-6 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors rounded-full hover:bg-airra-bg dark:hover:bg-zinc-800 text-airra-text dark:text-white">Home</Link>

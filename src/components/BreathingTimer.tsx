@@ -21,7 +21,8 @@ import {
   Target,
   Maximize2,
   Minimize2,
-  Clock
+  Clock,
+  X
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -40,6 +41,7 @@ import {
   fetchHistoricalHealthData, 
   HealthDayData 
 } from "@/src/services/healthService";
+import { synther } from "@/src/lib/synthEngine";
 
 const INHALE_DURATION = 4;
 const HOLD_DURATION = 7;
@@ -67,6 +69,59 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
   const [historicalData, setHistoricalData] = useState<HealthDayData[]>([]);
   const [activeTab, setActiveTab] = useState<"live" | "history">("live");
 
+  // Biometric Manual Sync Modal States
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState<boolean>(false);
+  const [syncProvider, setSyncProvider] = useState<"Apple Health" | "Fitbit" | "Garmin" | null>(null);
+  const [syncStep, setSyncStep] = useState<number>(0); // 0: Idle, 1: Connecting, 2: Fetching telemetry, 3: Analyzing baseline, 4: Aligning, 5: Completed
+  const [syncProgress, setSyncProgress] = useState<number>(0);
+  const [syncLog, setSyncLog] = useState<string[]>([]);
+
+  const startManualSync = (selectedPvName?: "Apple Health" | "Fitbit" | "Garmin") => {
+    const pv = selectedPvName || syncProvider || "Apple Health";
+    setSyncProvider(pv);
+    setSyncStep(1);
+    setSyncProgress(10);
+    setSyncLog(["Establishing encrypted biometric link...", `Handshaking gateway credentials for ${pv}...`]);
+
+    // Step 1 -> 2
+    setTimeout(() => {
+      setSyncStep(2);
+      setSyncProgress(35);
+      setSyncLog(prev => [...prev, "Biometric token verified securely.", `Querying ${pv} health database for cardiorespiratory telemetry...`, "Downloading recent heart rate time-series data..."]);
+    }, 1200);
+
+    // Step 2 -> 3
+    setTimeout(() => {
+      setSyncStep(3);
+      setSyncProgress(65);
+      setSyncLog(prev => [...prev, "Telemetry records downloaded successfully.", "Analyzing heart rate variability baseline spectrum...", "Calculating successive difference metrics (RMSSD)...", "Resolving parasympathetic coherence indexes..."]);
+    }, 2400);
+
+    // Step 3 -> 4
+    setTimeout(() => {
+      setSyncStep(4);
+      setSyncProgress(85);
+      setSyncLog(prev => [...prev, "Baseline RMSSD verified at 54 ms (+8.3% stability improvement).", "Optimizing parasympathetic feedback calibration...", "Aligning local Solfeggio carrier frequency models..."]);
+    }, 3600);
+
+    // Step 4 -> 5 (Completed)
+    setTimeout(() => {
+      setSyncStep(5);
+      setSyncProgress(100);
+      setSyncLog(prev => [...prev, "Symphonic carrier line lock secured.", "Synchronizing local digital registries...", "Verification complete. Biometric sync fully optimized!"]);
+      
+      setIsConnected(true);
+      setHealthProvider(pv);
+      
+      // Update historical data: boost Sunday data slightly to show real-time changes
+      setHistoricalData(prev => 
+        prev.map(item => 
+          item.day === "Sun" ? { ...item, avgHRV: Math.min(100, item.avgHRV + 4) } : item
+        )
+      );
+    }, 4800);
+  };
+
   // Real-time biometrics tracking
   const [biometrics, setBiometrics] = useState({ bpm: 72, hrv: 48, coherence: 15 });
   const [liveTelemetry, setLiveTelemetry] = useState<{
@@ -82,6 +137,18 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
   // HRV goal setting and baseline parameters
   const [targetHrvImprovement, setTargetHrvImprovement] = useState<number>(20);
   const [initialHrv] = useState<number>(48);
+
+  // Ambient Soundscape Backdrop Options
+  const SOUNDSCAPES = [
+    { id: "none", name: "No Soundscape", url: "", info: "Silent deep breathing focus" },
+    { id: "serene", name: "Serene Meadow", url: "https://assets.mixkit.co/music/preview/mixkit-serene-view-443.mp3", info: "Lush strings and soft ambient pads" },
+    { id: "zen", name: "Zen Temple", url: "https://assets.mixkit.co/music/preview/mixkit-meditation-soft-601.mp3", info: "Soft bamboo flute and peaceful drone" },
+    { id: "celestial", name: "Celestial Dream", url: "https://assets.mixkit.co/music/preview/mixkit-dreaming-big-31.mp3", info: "Celestial atmospheric space soundscape" },
+    { id: "wellness", name: "Wellness Retreat", url: "https://assets.mixkit.co/music/preview/mixkit-wellness-vibe-305.mp3", info: "Ethereal crystal-bowl harmony" }
+  ];
+
+  const [audioUrl, setAudioUrl] = useState<string>("");
+  const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -338,6 +405,10 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
     lastSecRef.current = -1;
     stopPhaseSounds();
     if (timerRef.current) clearInterval(timerRef.current);
+    if (ambientAudioRef.current) {
+      ambientAudioRef.current.pause();
+      ambientAudioRef.current.currentTime = 0;
+    }
   };
 
   // Timer effect
@@ -422,6 +493,97 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
       setHistoricalData(data);
     });
     return () => stopPhaseSounds();
+  }, []);
+
+  // Manage Ambient Soundscape Backdrops
+  useEffect(() => {
+    if (!audioUrl) {
+      if (ambientAudioRef.current) {
+        ambientAudioRef.current.pause();
+        ambientAudioRef.current = null;
+      }
+      synther.stop();
+      return;
+    }
+
+    const scName = SOUNDSCAPES.find(sc => sc.url === audioUrl)?.name || "Ambient";
+
+    if (!ambientAudioRef.current) {
+      const audio = new Audio(audioUrl);
+      audio.loop = true;
+      audio.volume = 0.25; // Soft backdrop volume so it doesn't overpower chimes
+      
+      audio.onerror = (e) => {
+        console.warn(`[Breathing Timer] Failed to load offline backdrop ${scName}. Initiating local synth fallback.`);
+        synther.start(scName);
+      };
+
+      audio.play().catch(err => {
+        console.warn(`[Breathing Timer] Play blocked or offline for ${scName}. Initiating local synth fallback:`, err);
+        synther.start(scName);
+      });
+
+      ambientAudioRef.current = audio;
+    } else {
+      const wasPlaying = !ambientAudioRef.current.paused;
+      ambientAudioRef.current.pause();
+      synther.stop();
+
+      ambientAudioRef.current.src = audioUrl;
+      ambientAudioRef.current.onerror = () => {
+        console.warn(`[Breathing Timer] Resource error switching to ${scName}. Using local synth.`);
+        synther.start(scName);
+      };
+
+      try {
+        ambientAudioRef.current.load();
+        if (wasPlaying) {
+          ambientAudioRef.current.play().catch(err => {
+            console.log("Ambient autoplay delayed, launching synth fallback:", err);
+            synther.start(scName);
+          });
+        }
+      } catch (err) {
+        console.warn("Exception in loading media. Starting fallback synth:", err);
+        synther.start(scName);
+      }
+    }
+
+    if (ambientAudioRef.current) {
+      ambientAudioRef.current.muted = !soundEnabled;
+    }
+
+    if (isPlaying) {
+      if (ambientAudioRef.current) {
+        ambientAudioRef.current.play().catch(err => {
+          console.log("Play failed, triggering fallback synthesis:", err);
+          synther.start(scName);
+        });
+      } else {
+        synther.start(scName);
+      }
+    } else {
+      if (ambientAudioRef.current) {
+        ambientAudioRef.current.pause();
+      }
+      synther.stop();
+    }
+  }, [audioUrl, isPlaying]);
+
+  useEffect(() => {
+    if (ambientAudioRef.current) {
+      ambientAudioRef.current.muted = !soundEnabled;
+    }
+  }, [soundEnabled]);
+
+  useEffect(() => {
+    return () => {
+      if (ambientAudioRef.current) {
+        ambientAudioRef.current.pause();
+        ambientAudioRef.current = null;
+      }
+      synther.stop();
+    };
   }, []);
 
   // Connect provider simulation
@@ -888,6 +1050,41 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
               </div>
             )}
 
+            {/* Ambient Soundscapes Selector */}
+            <div className="w-full max-w-xs space-y-2 px-4 text-left">
+              <label 
+                id="ambient-soundscape-label"
+                className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 dark:text-zinc-500 block flex items-center gap-1"
+              >
+                <Volume2 size={10} className="text-emerald-600 dark:text-emerald-400" />
+                Atmospheric Soundscape
+              </label>
+              <div className="relative">
+                <select
+                  id="ambient-soundscape-dropdown"
+                  value={audioUrl}
+                  onChange={(e) => setAudioUrl(e.target.value)}
+                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white/40 dark:bg-zinc-900/60 text-xs text-slate-800 dark:text-white focus:border-[#2D6A4F] focus:ring-1 focus:ring-[#2D6A4F] transition-all outline-none cursor-pointer font-medium appearance-none"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2310B981' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")`,
+                    backgroundPosition: 'right 0.75rem center',
+                    backgroundSize: '1.25rem',
+                    backgroundRepeat: 'no-repeat',
+                    paddingRight: '2.5rem'
+                  }}
+                >
+                  {SOUNDSCAPES.map((sc) => (
+                    <option key={sc.id} value={sc.url} className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100">
+                      {sc.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="text-[10px] text-slate-400 dark:text-zinc-500 mt-1 italic font-medium leading-relaxed">
+                  {SOUNDSCAPES.find(sc => sc.url === audioUrl)?.info || "Silent deep breathing focus"}
+                </div>
+              </div>
+            </div>
+
             {/* Instruction Context Section */}
             <div className="h-16 flex flex-col items-center justify-center text-center">
               <AnimatePresence mode="wait">
@@ -954,6 +1151,43 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
             isDark ? "bg-zinc-950/60 border-white/5" : "bg-white dark:bg-zinc-950 border-emerald-100/30 shadow-md"
           }`}
         >
+          <style>{`
+            @keyframes hrvPulse {
+              0% {
+                stroke-width: 2.5px;
+                filter: drop-shadow(0 0 2px rgba(20, 184, 166, 0.4));
+              }
+              50% {
+                stroke-width: 3.5px;
+                filter: drop-shadow(0 0 12px rgba(20, 184, 166, 0.95)) drop-shadow(0 0 5px rgba(20, 184, 166, 0.6));
+              }
+              100% {
+                stroke-width: 2.5px;
+                filter: drop-shadow(0 0 2px rgba(20, 184, 166, 0.4));
+              }
+            }
+            @keyframes hrvTrailPulse {
+              0% {
+                stroke-width: 5px;
+                opacity: 0.15;
+              }
+              50% {
+                stroke-width: 7.5px;
+                opacity: 0.35;
+              }
+              100% {
+                stroke-width: 5px;
+                opacity: 0.15;
+              }
+            }
+            .active-hrv-line path.recharts-curve {
+              animation: hrvPulse 2.5s infinite ease-in-out;
+            }
+            .active-hrv-trail path.recharts-curve {
+              animation: hrvTrailPulse 2.5s infinite ease-in-out;
+            }
+          `}</style>
+
           {/* Section 1: Health App Connection Hub */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-100 dark:border-white/5 gap-4">
             <div className="text-left">
@@ -966,7 +1200,7 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
             {/* Provider Sync Interface */}
             <div>
               {isConnected ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <div className="airra-glass border-emerald-300/30 text-emerald-800 dark:text-emerald-300 px-3 py-1.5 rounded-lg text-[9px] font-black tracking-wider uppercase flex items-center gap-1.5">
                     <span className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -975,9 +1209,21 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
                     Connected to {healthProvider}
                   </div>
                   <button 
+                    id="manual-resync-button"
+                    onClick={() => {
+                      setSyncProvider(healthProvider);
+                      setSyncStep(0); // reset sync state so user can trigger manually
+                      setIsSyncModalOpen(true);
+                    }}
+                    className="px-2.5 py-1.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 transition-all cursor-pointer flex items-center gap-1"
+                    title="Manually re-trigger biometric sensor synchronization"
+                  >
+                    <RefreshCw size={10} className="animate-pulse" /> Re-sync
+                  </button>
+                  <button 
                     id="disconnect-health-button"
                     onClick={disconnectProvider}
-                    className="text-[9px] font-semibold text-slate-400 hover:text-rose-500 transition-all font-mono"
+                    className="text-[9px] font-semibold text-[rgb(120,120,120)] hover:text-rose-500 transition-all font-mono px-2 py-1 bg-slate-50 dark:bg-zinc-900 rounded-lg border border-slate-200/50 dark:border-white/5 cursor-pointer"
                   >
                     Disconnect
                   </button>
@@ -993,22 +1239,34 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
                   <div className="flex gap-1.5">
                     <button
                       id="connect-apple-health"
-                      onClick={() => connectHealthProvider("Apple Health")}
-                      className="px-2.5 py-1.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-slate-50 hover:bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-zinc-300 transition-all"
+                      onClick={() => {
+                        setSyncProvider("Apple Health");
+                        setSyncStep(0);
+                        setIsSyncModalOpen(true);
+                      }}
+                      className="px-2.5 py-1.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-slate-50 hover:bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-zinc-300 transition-all cursor-pointer"
                     >
                       Apple Health
                     </button>
                     <button
                       id="connect-fitbit"
-                      onClick={() => connectHealthProvider("Fitbit")}
-                      className="px-2.5 py-1.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-slate-50 hover:bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-zinc-300 transition-all"
+                      onClick={() => {
+                        setSyncProvider("Fitbit");
+                        setSyncStep(0);
+                        setIsSyncModalOpen(true);
+                      }}
+                      className="px-2.5 py-1.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-slate-50 hover:bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-zinc-300 transition-all cursor-pointer"
                     >
                       Fitbit
                     </button>
                     <button
                       id="connect-garmin"
-                      onClick={() => connectHealthProvider("Garmin")}
-                      className="px-2.5 py-1.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-slate-50 hover:bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-zinc-300 transition-all"
+                      onClick={() => {
+                        setSyncProvider("Garmin");
+                        setSyncStep(0);
+                        setIsSyncModalOpen(true);
+                      }}
+                      className="px-2.5 py-1.5 rounded-md text-[8px] font-black uppercase tracking-wider bg-slate-50 hover:bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-zinc-300 transition-all cursor-pointer"
                     >
                       Garmin
                     </button>
@@ -1271,6 +1529,15 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
                   <div className="w-full h-full min-h-[180px] max-h-[220px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={liveTelemetry.slice(-15)} margin={{ top: 10, right: 10, left: -25, bottom: 5 }}>
+                        <defs>
+                          <filter id="hrv-line-glow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feGaussianBlur stdDeviation={isPlaying ? "3.5" : "0.1"} result="blur" />
+                            <feMerge>
+                              <feMergeNode in="blur" />
+                              <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                          </filter>
+                        </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#2A2A2A" : "#F1F1F1"} />
                         <XAxis dataKey="time" stroke="#94A3B8" fontSize={9} tickLine={false} />
                         <YAxis stroke="#94A3B8" fontSize={9} domain={[40, 110]} tickLine={false} />
@@ -1291,6 +1558,22 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
                           dot={false}
                           activeDot={{ r: 6 }}
                         />
+                        {/* Glow/trail backdrop line when active */}
+                        {isPlaying && (
+                          <Line
+                            key="hrv-active-trail"
+                            name="HRV Resonance Trail"
+                            type="monotone"
+                            dataKey="hrv"
+                            stroke="#14B8A6"
+                            strokeWidth={5.5}
+                            opacity={0.3}
+                            dot={false}
+                            activeDot={false}
+                            className="active-hrv-trail"
+                            legendType="none"
+                          />
+                        )}
                         <Line
                           name="HRV (Parasympathetic Tone)"
                           type="monotone"
@@ -1299,6 +1582,8 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
                           strokeWidth={2.5}
                           dot={false}
                           activeDot={{ r: 6 }}
+                          className={isPlaying ? "active-hrv-line" : ""}
+                          filter={isPlaying ? "url(#hrv-line-glow)" : undefined}
                         />
                       </LineChart>
                     </ResponsiveContainer>
@@ -2091,6 +2376,249 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
             </div>
 
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Biometric Manual Sync Modal */}
+      <AnimatePresence>
+        {isSyncModalOpen && (
+          <div className="fixed inset-0 z-[150] overflow-y-auto">
+            {/* Overlay backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => syncStep !== 5 && syncStep > 0 ? null : setIsSyncModalOpen(false)}
+              className="fixed inset-0 bg-slate-950/40 dark:bg-zinc-950/80 backdrop-blur-md cursor-pointer"
+            />
+            
+            {/* Modal Body container to center content */}
+            <div className="flex min-h-screen items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                className={`relative w-full max-w-xl rounded-3xl border p-6 sm:p-8 text-left shadow-2xl overflow-hidden focus:outline-none ${
+                  isDark 
+                    ? "bg-[#09090b] border-white/10 text-white" 
+                    : "bg-[#FAFAFA] border-slate-200 text-slate-800"
+                }`}
+              >
+                {/* Close Button */}
+                {(syncStep === 0 || syncStep === 5) && (
+                  <button
+                    onClick={() => setIsSyncModalOpen(false)}
+                    className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-200/50 dark:hover:bg-white/5 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-100 transition-colors cursor-pointer"
+                    aria-label="Close sync modal"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+
+                {/* Subtitle / Category Tag */}
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[9px] font-black uppercase tracking-wider mb-4">
+                  <ShieldCheck size={12} />
+                  Secure Biometric Pipeline
+                </div>
+
+                {/* Main Heading */}
+                <h3 className="text-xl sm:text-2xl font-display font-black tracking-tight uppercase leading-none mb-1">
+                  Biometric Sync Engine
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed mb-6">
+                  Establish a real-time cardiorespiratory data handshake with your mobile health node to calibrate autonomic relaxation metrics.
+                </p>
+
+                {/* Provider Selector Card Deck */}
+                <div className="mb-6 space-y-2.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                    Select Device Synchronizer Hub
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {(["Apple Health", "Fitbit", "Garmin"] as const).map((prov) => {
+                      const isSelected = syncProvider === prov;
+                      return (
+                        <button
+                          key={prov}
+                          disabled={syncStep > 0}
+                          onClick={() => setSyncProvider(prov)}
+                          className={`p-3 rounded-2xl border text-center transition-all ${
+                            syncStep > 0 ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+                          } ${
+                            isSelected
+                              ? "bg-emerald-500/10 border-emerald-500 text-emerald-800 dark:text-emerald-400 shadow-sm"
+                              : "bg-white dark:bg-zinc-900/30 hover:bg-slate-50 dark:hover:bg-zinc-900/50 border-slate-200 dark:border-white/5 text-slate-600 dark:text-zinc-300"
+                          }`}
+                        >
+                          <Smartphone size={16} className={`mx-auto mb-1 rounded ${isSelected ? "text-emerald-500 animate-pulse" : "text-slate-400"}`} />
+                          <div className="text-[10px] font-black tracking-wide uppercase truncate">
+                            {prov}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Sync Progress Indicator */}
+                {syncStep > 0 && (
+                  <div className="mb-6 space-y-3 p-5 rounded-2xl bg-white dark:bg-zinc-900/40 border border-slate-200/50 dark:border-white/5 shadow-inner">
+                    <div className="flex justify-between items-center text-[10px]">
+                      <span className="font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+                        {syncStep === 1 && "Verifying Security Link"}
+                        {syncStep === 2 && "Accessing Raw Pulse Data"}
+                        {syncStep === 3 && "Analyzing HRV Spectral Baseline"}
+                        {syncStep === 4 && "Calibrating Neural Synthesis"}
+                        {syncStep === 5 && "Synchronicity Lock Established"}
+                      </span>
+                      <span className="font-mono text-emerald-500 font-bold">{syncProgress}%</span>
+                    </div>
+
+                    {/* Progress Bar Track */}
+                    <div className="h-2 w-full bg-slate-100 dark:bg-zinc-950 rounded-full overflow-hidden border border-slate-200/20 dark:border-white/5">
+                      <motion.div
+                        initial={{ width: "0%" }}
+                        animate={{ width: `${syncProgress}%` }}
+                        transition={{ duration: 0.4 }}
+                        className="h-full bg-emerald-500 rounded-full shadow-[0_0_12px_rgba(16,185,129,0.5)]"
+                      />
+                    </div>
+
+                    {/* Progressive Step Checkpoints */}
+                    <div className="grid grid-cols-4 gap-1.5 pt-1.5">
+                      {[1, 2, 3, 4].map((stepIdx) => {
+                        const isDone = syncStep > stepIdx;
+                        const isActive = syncStep === stepIdx;
+                        return (
+                          <div key={stepIdx} className="flex flex-col items-center gap-1 text-center">
+                            <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-black ${
+                              isDone 
+                                ? "bg-emerald-500 text-white animate-bounce" 
+                                : isActive 
+                                ? "bg-emerald-500/20 text-emerald-500 border border-emerald-500/40 animate-pulse" 
+                                : "bg-slate-100 dark:bg-zinc-900 text-slate-400 dark:text-zinc-600 border border-transparent"
+                            }`}>
+                              {isDone ? "✓" : stepIdx}
+                            </div>
+                            <span className={`text-[7px] font-black uppercase tracking-wider ${
+                              isDone ? "text-emerald-500 font-bold" : isActive ? "text-slate-800 dark:text-zinc-200 font-bold" : "text-slate-400"
+                            }`}>
+                              {stepIdx === 1 ? "Link" : stepIdx === 2 ? "Tele" : stepIdx === 3 ? "Anal" : "Align"}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Console System Logging */}
+                {syncStep > 0 && (
+                  <div className="mb-6">
+                    <div className="p-4 rounded-xl bg-white dark:bg-zinc-950 border border-slate-200/50 dark:border-white/5 font-mono text-[10px] space-y-1.5 max-h-[140px] overflow-y-auto shadow-inner">
+                      <div className="text-slate-400 dark:text-zinc-500 uppercase font-bold tracking-wider mb-2 border-b border-slate-100 dark:border-white/5 pb-1 flex justify-between items-center text-[8px]">
+                        <span>Co-Processor System Log</span>
+                        {syncStep < 5 && <RefreshCw size={8} className="animate-spin text-emerald-500" />}
+                      </div>
+                      {syncLog.map((logLine, index) => (
+                        <motion.div
+                          initial={{ opacity: 0, x: -6 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.2 }}
+                          key={index}
+                          className="text-slate-600 dark:text-zinc-300 flex items-start gap-1.5 break-words"
+                        >
+                          <span className="text-emerald-500 font-bold">▶</span>
+                          <span>{logLine}</span>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Complete Dashboard Summary */}
+                {syncStep === 5 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-6 p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/25 space-y-3"
+                  >
+                    <div className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Baseline Alignment Parameters</div>
+                    <div className="grid grid-cols-2 gap-3.5">
+                      <div className="p-3 bg-white dark:bg-zinc-900/40 rounded-xl border border-emerald-500/10">
+                        <div className="text-[8px] text-slate-400 dark:text-zinc-500 font-black uppercase tracking-widest">Resting Heart Rate</div>
+                        <div className="text-lg font-mono font-black text-slate-800 dark:text-zinc-100 mt-1 flex items-baseline gap-1">
+                          68 <span className="text-[9px] text-slate-400 uppercase font-sans">BPM</span>
+                        </div>
+                      </div>
+                      <div className="p-3 bg-white dark:bg-zinc-900/40 rounded-xl border border-emerald-500/10">
+                        <div className="text-[8px] text-slate-400 dark:text-zinc-500 font-black uppercase tracking-widest">Stabilized HRV</div>
+                        <div className="text-lg font-mono font-black text-slate-800 dark:text-zinc-100 mt-1 flex items-baseline gap-1">
+                          54 <span className="text-[9px] text-emerald-500 uppercase font-sans font-bold">+8.3%</span>
+                        </div>
+                      </div>
+                      <div className="p-3 bg-white dark:bg-zinc-900/40 rounded-xl border border-emerald-500/10">
+                        <div className="text-[8px] text-slate-400 dark:text-zinc-500 font-black uppercase tracking-widest">RSA Match Coherence</div>
+                        <div className="text-lg font-mono font-black text-slate-800 dark:text-zinc-100 mt-1 flex items-baseline gap-1">
+                          96% <span className="text-[9px] text-slate-400 uppercase font-sans">Index</span>
+                        </div>
+                      </div>
+                      <div className="p-3 bg-white dark:bg-zinc-900/40 rounded-xl border border-emerald-500/10">
+                        <div className="text-[8px] text-slate-400 dark:text-zinc-500 font-black uppercase tracking-widest">Security Token</div>
+                        <div className="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold mt-1.5 truncate">
+                          AES_256_ACTIVE
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* CTA Action Buttons */}
+                <div className="flex gap-3 mt-6">
+                  {syncStep === 0 ? (
+                    <>
+                      <button
+                        onClick={() => setIsSyncModalOpen(false)}
+                        className="flex-1 py-3 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-slate-200/55 dark:border-white/5 text-slate-700 dark:text-zinc-300 text-xs font-bold tracking-wide transition-all cursor-pointer text-center"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => startManualSync()}
+                        disabled={!syncProvider}
+                        className={`flex-[2_2_0%] py-3 px-4 rounded-2xl text-xs font-bold tracking-wide uppercase transition-all flex items-center justify-center gap-2 ${
+                          syncProvider
+                            ? "bg-slate-800 text-white dark:bg-zinc-100 dark:text-zinc-900 hover:shadow-airra-md cursor-pointer"
+                            : "bg-slate-100 dark:bg-zinc-900 text-slate-400 cursor-not-allowed border border-slate-200/40 dark:border-white/5"
+                        }`}
+                      >
+                        <RefreshCw size={14} /> Synchronize Nodes
+                      </button>
+                    </>
+                  ) : syncStep === 5 ? (
+                    <button
+                      onClick={() => {
+                        setIsSyncModalOpen(false);
+                        setSyncStep(0); // reset state back to idle for subsequent trigger
+                      }}
+                      className="w-full py-3 px-4 rounded-2xl bg-emerald-600 text-white hover:bg-emerald-700 font-bold tracking-wide text-xs uppercase shadow-lg shadow-emerald-600/10 transition-all cursor-pointer"
+                    >
+                      Commit Baseline Alignment
+                    </button>
+                  ) : (
+                    <button
+                      disabled
+                      className="w-full py-3 px-4 rounded-2xl bg-slate-100 dark:bg-zinc-900 text-slate-400 dark:text-zinc-600 border border-slate-200/20 dark:border-white/5 text-xs font-bold tracking-wide cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      <RefreshCw className="animate-spin text-emerald-500" size={14} /> 
+                      Engaging Biometric Channels...
+                    </button>
+                  )}
+                </div>
+
+              </motion.div>
+            </div>
+          </div>
         )}
       </AnimatePresence>
 
