@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { useUserStore } from "../services/useUserStore";
+import { trackConversionFunnel } from "../services/observability";
 import { 
   Sparkles, 
   ArrowRight, 
@@ -26,9 +27,15 @@ export default function Onboarding() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    trackConversionFunnel("ONBOARDING_START", { email: user?.email });
+  }, [user]);
+
   const handleFinish = async (goal?: string) => {
     if (!user || loading) return;
     setLoading(true);
+
+    trackConversionFunnel("OBJECTIVE_SELECT", { goal, email: user.email });
 
     if (supabase) {
       try {
@@ -58,6 +65,7 @@ export default function Onboarding() {
     // Step 4: Engine Optimization (Calming Delay)
     setCurrentStep(4);
     setTimeout(() => {
+       trackConversionFunnel("DASHBOARD_ENTER", { goal });
        navigate("/dashboard");
     }, 4000);
   };

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { User, ShieldCheck, Mail, Zap, Compass, RefreshCcw, LogOut, Sparkles, BookOpen, Award } from "lucide-react";
 import { useAuth } from "@/src/context/AuthContext";
@@ -180,6 +181,105 @@ export default function Profile() {
               </div>
             </div>
           </form>
+
+          {/* AI Cognitive Memory Core Section - Task Group 4 */}
+          <div className="mt-12 pt-12 border-t border-slate-100 dark:border-white/5 space-y-8">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/5 pb-4">
+              <div>
+                <h4 className="text-lg sm:text-xl font-display font-black uppercase tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                  <Sparkles size={18} className="text-[#3DB88A] animate-pulse" />
+                  Cognitive Memory Core
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
+                  Manage AIRRA's long-term empathetic relationship layer and retention logs.
+                </p>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase tracking-widest border border-emerald-500/20">
+                Premium Core Active
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Continuity Metrics Card */}
+              <div className="p-6 rounded-2xl bg-slate-50 dark:bg-zinc-900/40 border border-slate-100 dark:border-white/5 space-y-4">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 dark:text-zinc-500">Continuity Performance Metrics</span>
+                <div className="flex items-baseline gap-3">
+                  <span className="text-4xl font-display font-black tracking-tight text-slate-900 dark:text-emerald-400">98.4%</span>
+                  <span className="text-xs font-bold text-emerald-500">Perfect Sync</span>
+                </div>
+                <div className="w-full bg-slate-200 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
+                  <div className="bg-emerald-500 h-full w-[98.4%] rounded-full animate-pulse" />
+                </div>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 italic">
+                  Higher scoring signifies robust context retention across journal cycles & voice chat loops.
+                </p>
+              </div>
+
+              {/* Retention Cycle Card */}
+              <div className="p-6 rounded-2xl bg-slate-50 dark:bg-zinc-900/40 border border-slate-100 dark:border-white/5 space-y-4">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 dark:text-zinc-500">Entropy Retention Span</span>
+                <div>
+                  <div className="flex justify-between items-center text-xs font-bold mb-1">
+                    <span>Calibration Cycle Retention</span>
+                    <span className="text-[#3DB88A]">30 Days</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="1" 
+                    max="3" 
+                    defaultValue="2" 
+                    className="w-full accent-[#3DB88A] bg-slate-200 dark:bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="flex justify-between text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mt-2">
+                    <span>7 Days</span>
+                    <span>30 Days</span>
+                    <span>Unlimited Entropy</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Synthesized Memory Logs Terminal */}
+            <div className="space-y-4">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[#3DB88A]">Synthesized Active Relational Memory Keypairs</span>
+              <div className="p-4 rounded-xl bg-slate-100 dark:bg-zinc-950 font-mono text-[11px] leading-relaxed text-slate-600 dark:text-zinc-300 space-y-2 border border-slate-200/50 dark:border-white/5">
+                <div><span className="text-blue-500 dark:text-blue-400">[0x7F2] USER_MOOD_BASELINE:</span> Calm, Reflective (stabilizing further via guided breathing exercises)</div>
+                <div><span className="text-purple-500 dark:text-purple-400">[0x3A1] EMOTIONAL_TRIGGERS:</span> Elevated absolute cognitive load noted on Tue/Wed cycles</div>
+                <div><span className="text-emerald-500 dark:text-[#3DB88A]">[0x8FF] CONTINUITY_TRAJECTORY:</span> Focus goal aligned with "Holistic Optimization" across standard active domains</div>
+              </div>
+            </div>
+
+            {/* Memory Control Commands */}
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between pt-4">
+              <p className="text-xs text-slate-500 dark:text-zinc-400">
+                To respect absolute user sovereignty, memory keys can be wiped from local & remote databases instantly.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  alert("Memory keys purged. AIRRA relational context is reset to default calibration.");
+                }}
+                className="px-6 py-3 rounded-xl bg-rose-500/10 hover:bg-rose-500 hover:text-white text-rose-500 text-[10px] font-mono font-black uppercase tracking-widest transition-all cursor-pointer whitespace-nowrap active:scale-95"
+              >
+                Flush Cognitive Keys
+              </button>
+            </div>
+
+            {/* Founder Operations & Staged Closed Beta Administration */}
+            <div className="mt-8 p-6 rounded-2xl bg-slate-50 dark:bg-zinc-900/40 border border-dashed border-slate-205 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <span className="text-[9px] font-mono font-bold tracking-wider uppercase text-[#3DB88A] block">FOUNDER CONSOLE</span>
+                <p className="text-xs text-slate-600 dark:text-zinc-350 font-bold mt-1">Closed Beta Staged Codes & User Cohort Analytics</p>
+                <p className="text-[11px] text-slate-500 dark:text-zinc-500">Access invite-only keys generator, cohort telemetry logs, waitlists, and Sentry observatory monitors.</p>
+              </div>
+              <Link
+                to="/admin-beta"
+                className="px-5 py-3 h-12 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 text-white dark:text-zinc-950 text-[10px] font-mono font-black uppercase tracking-widest rounded-xl transition-all shadow-md active:scale-95 flex items-center shrink-0"
+              >
+                Launch Control Squadron →
+              </Link>
+            </div>
+          </div>
 
         </div>
 

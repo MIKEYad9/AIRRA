@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import { Navigate, useLocation } from "react-router-dom";
-import { LogIn, Mail, Lock, AlertCircle, Chrome, Sparkles, Fingerprint, Shield, ArrowRight } from "lucide-react";
+import { LogIn, Mail, Lock, AlertCircle, Chrome, Sparkles, Fingerprint, Shield, ShieldCheck, ArrowRight } from "lucide-react";
 
 export default function Login() {
   const { user, signInAsTestUser, signInWithGoogleMock } = useAuth();
@@ -15,6 +15,15 @@ export default function Login() {
 
   const [isSignUp, setIsSignUp] = useState(location.state?.mode === 'signup');
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  // Staged Closed Beta and Waitlist Engine States (Task Group 3 & Phase 4A)
+  const [showBetaPrompt, setShowBetaPrompt] = useState(false);
+  const [betaCode, setBetaCode] = useState("");
+  const [betaError, setBetaError] = useState<string | null>(null);
+  const [showWaitlistForm, setShowWaitlistForm] = useState(false);
+  const [waitlistSuccess, setWaitlistSuccess] = useState(false);
+  const [waitlistEmail, setWaitlistEmail] = useState("");
+  const [waitlistName, setWaitlistName] = useState("");
 
   // Google OAuth simulator states
   const [showGoogleMockSelector, setShowGoogleMockSelector] = useState(false);
@@ -365,7 +374,176 @@ export default function Login() {
                 </div>
 
                 <AnimatePresence mode="wait">
-                  {error === "CONFIRMATION_SENT" ? (
+                  {showBetaPrompt ? (
+                    <motion.div
+                      key="beta-prompt-block"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="space-y-6 text-left"
+                    >
+                      <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 space-y-2">
+                        <span className="text-[10px] font-mono font-black uppercase text-amber-500 tracking-wider flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                          Access Validation Protocol
+                        </span>
+                        <p className="text-[11px] text-slate-600 dark:text-zinc-400 font-medium leading-relaxed">
+                          This build is locked under the <strong className="font-semibold text-[#3DB88A] uppercase">AIRRA Closed Beta</strong>. A valid passcode or invitation certificate tag is required to unlock guest sandbox state.
+                        </p>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="Enter Closed Passpass / Beta Code"
+                            className="w-full h-16 bg-airra-surface dark:bg-zinc-900 border border-airra-border dark:border-zinc-800 rounded-2xl px-6 text-center text-sm font-mono font-bold text-slate-800 dark:text-white uppercase focus:border-emerald-500/30 tracking-widest"
+                            value={betaCode}
+                            onChange={(e) => {
+                              setBetaCode(e.target.value);
+                              setBetaError(null);
+                            }}
+                          />
+                        </div>
+
+                        {betaError && (
+                          <p className="text-[10px] text-rose-500 font-bold uppercase tracking-wider text-center">{betaError}</p>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const lower = betaCode.trim().toUpperCase();
+                            if (["AIRRA-BETA-2026", "CALM-ENERGY-99", "SOVEREIGN-MIND-77"].includes(lower)) {
+                              signInAsTestUser();
+                            } else {
+                              setBetaError("Passcode signature rejected. Try: AIRRA-BETA-2026");
+                            }
+                          }}
+                          className="w-full h-16 bg-[#3DB88A] hover:opacity-90 text-white rounded-2xl text-[10px] font-mono font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer"
+                        >
+                          Confirm Security Code
+                        </button>
+
+                        <div className="flex flex-col gap-2.5 text-center pt-2 text-[10px] font-bold">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowBetaPrompt(false);
+                              setShowWaitlistForm(true);
+                            }}
+                            className="text-[#3DB88A] uppercase tracking-wider hover:underline cursor-pointer"
+                          >
+                            No invite code? Join Priority Waitlist
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowBetaPrompt(false)}
+                            className="text-slate-400 uppercase tracking-wider hover:text-slate-600 cursor-pointer"
+                          >
+                            Back to Standard Keypad
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ) : showWaitlistForm ? (
+                    <motion.div
+                      key="waitlist-form-block"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="space-y-6 text-left"
+                    >
+                      {!waitlistSuccess ? (
+                        <form 
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            setWaitlistSuccess(true);
+                          }}
+                          className="space-y-4"
+                        >
+                          <div className="space-y-1">
+                            <h3 className="text-sm font-black dark:text-zinc-200 uppercase tracking-wider text-center">Join Priority Queue</h3>
+                            <p className="text-[11px] text-slate-400 dark:text-zinc-500 text-center">Get custom enrollment invites as soon as next cohorts open.</p>
+                          </div>
+
+                          <div className="space-y-3">
+                            <input
+                              type="text"
+                              placeholder="Your Name"
+                              required
+                              className="w-full h-14 bg-airra-surface dark:bg-zinc-900 border border-airra-border dark:border-zinc-800 rounded-xl px-5 text-xs text-slate-800 dark:text-white font-semibold"
+                              value={waitlistName}
+                              onChange={(e) => setWaitlistName(e.target.value)}
+                            />
+                            <input
+                              type="email"
+                              placeholder="Your Email"
+                              required
+                              className="w-full h-14 bg-airra-surface dark:bg-zinc-900 border border-airra-border dark:border-zinc-800 rounded-xl px-5 text-xs text-slate-800 dark:text-white font-semibold"
+                              value={waitlistEmail}
+                              onChange={(e) => setWaitlistEmail(e.target.value)}
+                            />
+                          </div>
+
+                          <button
+                            type="submit"
+                            className="w-full h-14 bg-slate-900 dark:bg-white text-white dark:text-zinc-950 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer"
+                          >
+                            Secure Waitlist Spot
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowWaitlistForm(false);
+                              setShowBetaPrompt(true);
+                            }}
+                            className="w-full text-center text-[10px] font-mono text-[#3DB88A] uppercase hover:underline cursor-pointer"
+                          >
+                            ← Back to Passcode Validation
+                          </button>
+                        </form>
+                      ) : (
+                        <div className="space-y-6 text-center">
+                          <div className="w-14 h-14 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto">
+                            <ShieldCheck size={28} />
+                          </div>
+
+                          <div className="space-y-1">
+                            <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">Waitlist Placement Lock</h4>
+                            <p className="text-[11px] text-[#3DB88A] font-bold font-mono">ESTIMATED COHORT TIME: 24-48 HOURS</p>
+                            <p className="text-[10px] text-slate-400 dark:text-zinc-500">Waitlist position #1,402. Jump the index queue by distributing your custom referral badge lock.</p>
+                          </div>
+
+                          <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-white/5 space-y-2 text-left font-mono">
+                            <span className="text-[8px] text-zinc-500 uppercase font-black block tracking-wider">YOUR RETENTION REFERRAL LINK:</span>
+                            <div className="flex bg-slate-100 dark:bg-zinc-950 p-2.5 rounded-lg justify-between items-center text-[10px]">
+                              <span className="text-zinc-700 dark:text-zinc-300 font-bold">AIRRA-INVITE-{Math.floor(Math.random() * 90000 + 10000)}</span>
+                              <button 
+                                type="button"
+                                onClick={() => alert("Referral passkey copied. Secure high priority wait index positioning.")}
+                                className="text-[#3DB88A] font-black uppercase tracking-wider text-[8px] cursor-pointer"
+                              >
+                                COPY LINK
+                              </button>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowWaitlistForm(false);
+                              setWaitlistSuccess(false);
+                            }}
+                            className="w-full py-3 rounded-lg border border-slate-205 dark:border-white/10 text-[10px] font-bold uppercase tracking-widest text-[#3DB88A] hover:text-[#3DB88A]/80 cursor-pointer"
+                          >
+                            ← Back to Security Portal
+                          </button>
+                        </div>
+                      )}
+                    </motion.div>
+                  ) : error === "CONFIRMATION_SENT" ? (
                     <motion.div
                       key="success"
                       initial={{ opacity: 0, scale: 0.95 }}
@@ -401,7 +579,7 @@ export default function Login() {
                           <input
                             type="email"
                             placeholder="Neural record ID"
-                            className="w-full h-16 bg-airra-surface dark:bg-zinc-900 border border-airra-border dark:border-zinc-800 rounded-2xl pl-14 pr-6 text-airra-text dark:text-white focus:outline-none focus:border-[#3DB88A]/40 transition-all font-bold text-sm tracking-tight"
+                            className="w-full h-16 bg-airra-surface dark:bg-zinc-900 border border-airra-border dark:border-zinc-800 rounded-xl pl-14 pr-6 text-airra-text dark:text-white focus:outline-none focus:border-[#3DB88A]/40 transition-all font-bold text-sm tracking-tight"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
@@ -413,7 +591,7 @@ export default function Login() {
                           <input
                             type="password"
                             placeholder="Access Key"
-                            className="w-full h-16 bg-airra-surface dark:bg-zinc-900 border border-airra-border dark:border-zinc-800 rounded-2xl pl-14 pr-6 text-airra-text dark:text-white focus:outline-none focus:border-[#3DB88A]/40 transition-all font-bold text-sm tracking-tight"
+                            className="w-full h-16 bg-airra-surface dark:bg-zinc-900 border border-airra-border dark:border-zinc-800 rounded-xl pl-14 pr-6 text-airra-text dark:text-white focus:outline-none focus:border-[#3DB88A]/40 transition-all font-bold text-sm tracking-tight"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
@@ -424,7 +602,7 @@ export default function Login() {
                       <button
                         type="submit"
                         disabled={loading || googleLoading}
-                        className="w-full h-18 rounded-2xl bg-airra-text dark:bg-white text-airra-bg dark:text-zinc-900 font-black text-xs uppercase tracking-widest shadow-airra-xl hover:opacity-90 transition-all flex items-center justify-center gap-4 group cursor-pointer"
+                        className="w-full h-18 rounded-xl bg-airra-text dark:bg-white text-airra-bg dark:text-zinc-900 font-black text-xs uppercase tracking-widest shadow-airra-xl hover:opacity-90 transition-all flex items-center justify-center gap-4 group cursor-pointer"
                       >
                         {loading ? (
                           <div className="w-5 h-5 border-2 border-current/20 border-t-current rounded-full animate-spin" />
@@ -446,10 +624,10 @@ export default function Login() {
         <div className="pt-8 border-t border-airra-border dark:border-zinc-900 text-center space-y-6">
           <p className="text-[10px] font-black text-airra-muted uppercase tracking-[0.4em]">Sandbox Environment</p>
           <button
-            onClick={() => signInAsTestUser()}
-            className="w-full h-16 rounded-2xl border-2 border-dashed border-airra-border dark:border-zinc-800 text-airra-muted hover:text-airra-text hover:border-airra-primary transition-all text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-4 group"
+            onClick={() => setShowBetaPrompt(true)}
+            className="w-full h-16 rounded-2xl border-2 border-dashed border-airra-border dark:border-zinc-800 text-airra-muted hover:text-airra-text hover:border-airra-primary transition-all text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-4 group cursor-pointer"
           >
-            <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse group-hover:scale-125 transition-transform" />
+            <div className="w-2.5 h-2.5 bg-[#3DB88A] rounded-full animate-pulse group-hover:scale-125 transition-transform" />
             Guest Sequence
           </button>
         </div>

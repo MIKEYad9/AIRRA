@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, User, Bot, Sparkles, Mic, Keyboard, Volume2, Activity, Info, RefreshCcw, ArrowRight, History, Plus, X, MessageSquare, ChevronLeft } from 'lucide-react';
-import { getGemini, SYSTEM_PROMPT, generateFollowUpSuggestions } from '../services/geminiService';
+import { SYSTEM_PROMPT, generateFollowUpSuggestions, sendChatMessage } from '../services/geminiService';
 import { supabase } from '../lib/supabase';
 import { useUserStore } from '../services/useUserStore';
 import { useNavigate } from 'react-router-dom';
@@ -412,18 +412,7 @@ export default function AIChat() {
 
       setMessages(prev => [...prev, userMsg as ChatMessage]);
 
-      const ai = getGemini();
-      const chat = ai.chats.create({
-        model: "gemini-3.5-flash",
-        config: { systemInstruction: SYSTEM_PROMPT },
-        history: messages.map(m => ({
-          role: m.role,
-          parts: [{ text: m.content }]
-        }))
-      });
-
-      const response = await chat.sendMessage({ message: contentToSend });
-      const aiContent = response.text || "I'm listening closely. Could you elaborate on that?";
+      const aiContent = await sendChatMessage(contentToSend, messages);
 
       let aiMsg: ChatMessage | null = null;
       if (isOfflineOrTestMode() || (currentConvId && currentConvId.startsWith('local_'))) {

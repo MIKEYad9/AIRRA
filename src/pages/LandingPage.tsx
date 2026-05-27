@@ -139,10 +139,7 @@ export default function LandingPage() {
     }, 6000);
   };
 
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"]
-  });
+  const { scrollYProgress } = useScroll();
 
   const heroScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.9]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);

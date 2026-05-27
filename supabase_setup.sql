@@ -169,3 +169,26 @@ CREATE POLICY "Users can create community posts" ON public.community_posts FOR I
 CREATE POLICY "Anyone can view likes" ON public.post_likes FOR SELECT USING (true);
 CREATE POLICY "Users can toggle their own likes" ON public.post_likes FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can remove their own likes" ON public.post_likes FOR DELETE USING (auth.uid() = user_id);
+
+-- ============================================================================
+-- PHASE 2B DATABASE OPTIMIZATION: PERFORMANCE INDEXES
+-- ============================================================================
+
+-- Fast journal lookup by user and chronological pagination
+CREATE INDEX IF NOT EXISTS idx_journals_user_created ON public.journals (user_id, created_at DESC);
+
+-- Fast mood telemetry logging lookup and aggregation
+CREATE INDEX IF NOT EXISTS idx_mood_logs_user_created ON public.mood_logs (user_id, created_at DESC);
+
+-- Fast active/historical chat conversations lookup
+CREATE INDEX IF NOT EXISTS idx_conversations_user_updated ON public.conversations (user_id, updated_at DESC);
+
+-- Fast messages aggregation in active conversation views
+CREATE INDEX IF NOT EXISTS idx_chat_messages_conv_created ON public.chat_messages (conversation_id, created_at ASC);
+
+-- Quick coach booking checks
+CREATE INDEX IF NOT EXISTS idx_bookings_user ON public.consultation_bookings (user_id, booking_date);
+
+-- Optimized public feed queries & chronological infinite scroll paging
+CREATE INDEX IF NOT EXISTS idx_community_posts_created ON public.community_posts (created_at DESC);
+

@@ -1963,7 +1963,7 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
                     <button
                       id="toggle-bpm-series"
                       onClick={() => setShowBpmSeries(!showBpmSeries)}
-                      className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 border ${
+                      className={`px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 border ${
                         showBpmSeries
                           ? isDark
                             ? "bg-rose-500/10 border-rose-500/30 text-rose-400"
@@ -1971,14 +1971,17 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
                           : "bg-slate-50 dark:bg-zinc-800/20 border-slate-200/50 dark:border-zinc-800/50 text-slate-400 dark:text-zinc-600 hover:bg-slate-100 dark:hover:bg-zinc-800/30"
                       }`}
                     >
-                      <span className={`w-1.5 h-1.5 rounded-full ${showBpmSeries ? "bg-rose-500" : "bg-slate-300 dark:bg-zinc-700"}`} />
+                      <span 
+                        style={{ fontSize: "11px" }}
+                        className={`w-1.5 h-1.5 rounded-full ${showBpmSeries ? "bg-rose-500" : "bg-slate-300 dark:bg-zinc-700"}`} 
+                      />
                       Heart Rate (BPM)
                     </button>
 
                     <button
                       id="toggle-hrv-series"
                       onClick={() => setShowHrvSeries(!showHrvSeries)}
-                      className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 border ${
+                      className={`px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 border ${
                         showHrvSeries
                           ? isDark
                             ? "bg-teal-500/10 border-teal-500/30 text-teal-400"
@@ -1986,14 +1989,17 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
                           : "bg-slate-50 dark:bg-zinc-800/20 border-slate-200/50 dark:border-zinc-800/50 text-slate-400 dark:text-zinc-600 hover:bg-slate-100 dark:hover:bg-zinc-800/30"
                       }`}
                     >
-                      <span className={`w-1.5 h-1.5 rounded-full ${showHrvSeries ? "bg-teal-500" : "bg-slate-300 dark:bg-zinc-700"}`} />
+                      <span 
+                        style={{ fontSize: "11px" }}
+                        className={`w-1.5 h-1.5 rounded-full ${showHrvSeries ? "bg-teal-500" : "bg-slate-300 dark:bg-zinc-700"}`} 
+                      />
                       Vagal Tone (HRV)
                     </button>
 
                     <button
                       id="toggle-guidance-path"
                       onClick={() => setShowGuidancePath(!showGuidancePath)}
-                      className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 border ${
+                      className={`px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 border ${
                         showGuidancePath
                           ? isDark
                             ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
@@ -2001,14 +2007,17 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
                             : "bg-slate-50 dark:bg-zinc-800/20 border-slate-200/50 dark:border-zinc-800/50 text-slate-400 dark:text-zinc-600 hover:bg-slate-100 dark:hover:bg-zinc-800/30"
                       }`}
                     >
-                      <span className={`w-1.5 h-1.5 rounded-full ${showGuidancePath ? "bg-emerald-500 dark:bg-emerald-400 animate-pulse" : "bg-slate-300 dark:bg-zinc-700"}`} />
+                      <span 
+                        style={{ fontSize: "11px" }}
+                        className={`w-1.5 h-1.5 rounded-full ${showGuidancePath ? "bg-emerald-500 dark:bg-emerald-400 animate-pulse" : "bg-slate-300 dark:bg-zinc-700"}`} 
+                      />
                       Guidance Path (Ideal Rhythm)
                     </button>
 
                     <button
                       id="toggle-coherence-peaks"
                       onClick={() => setShowPeaks(!showPeaks)}
-                      className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 border ${
+                      className={`px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 border ${
                         showPeaks
                           ? isDark
                             ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
@@ -2016,7 +2025,10 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
                           : "bg-slate-50 dark:bg-zinc-800/20 border-slate-200/50 dark:border-zinc-800/50 text-slate-400 dark:text-zinc-600 hover:bg-slate-100 dark:hover:bg-zinc-800/30"
                       }`}
                     >
-                      <span className={`w-1.5 h-1.5 rounded-full ${showPeaks ? "bg-emerald-500" : "bg-slate-300 dark:bg-zinc-700"}`} />
+                      <span 
+                        style={{ fontSize: "11px" }}
+                        className={`w-1.5 h-1.5 rounded-full ${showPeaks ? "bg-emerald-500" : "bg-slate-300 dark:bg-zinc-700"}`} 
+                      />
                       Coherence Peaks
                     </button>
 

@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/src/lib/supabase";
 import { useAuth } from "@/src/context/AuthContext";
 import { useUserStore } from "@/src/services/useUserStore";
+import { trackConversionFunnel } from "@/src/services/observability";
 import { Check, ShieldCheck, Zap, Star, ArrowLeft, Cpu, Infinity, Sparkles } from "lucide-react";
 
 declare global {
@@ -57,6 +58,10 @@ export default function Pricing() {
   const [loading, setLoading] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    trackConversionFunnel("PRICING_VIEW", { currentPlan: subscription?.plan_type || "free" });
+  }, [subscription]);
+
   const loadRazorpay = () => {
     return new Promise((resolve) => {
       const script = document.createElement('script');
@@ -72,6 +77,7 @@ export default function Pricing() {
     if (plan.id === 'free') return;
     
     setLoading(plan.id);
+    trackConversionFunnel("UPGRADE_INITIALIZE", { planId: plan.id, price: plan.price });
 
     const res = await loadRazorpay();
 
@@ -89,6 +95,7 @@ export default function Pricing() {
       description: `Neural Upgrade: ${plan.name}`,
       image: "/logo.png",
       handler: async function (response: any) {
+        trackConversionFunnel("UPGRADE_SUCCESS", { planId: plan.id, price: plan.price });
         const { error } = await supabase
           .from('subscriptions')
           .insert({

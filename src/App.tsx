@@ -22,6 +22,7 @@ import DiagnosticScreen from "@/src/pages/DiagnosticScreen";
 import SavedSessions from "@/src/pages/SavedSessions";
 import Profile from "@/src/pages/Profile";
 import WorkspacePortal from "@/src/pages/WorkspacePortal";
+import AdminBeta from "@/src/pages/AdminBeta";
 
 export default function App() {
   return (
@@ -121,6 +122,14 @@ export default function App() {
                 element={
                   <ProtectedRoute>
                     <AppLayout><Profile /></AppLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin-beta" 
+                element={
+                  <ProtectedRoute>
+                    <AppLayout><AdminBeta /></AppLayout>
                   </ProtectedRoute>
                 } 
               />
