@@ -53,6 +53,12 @@ app.get("/googlec7cf5385d8922ada.html", (req, res) => {
   res.send("google-site-verification: googlec7cf5385d8922ada.html");
 });
 
+// Sitemap Endpoint
+app.get("/sitemap.xml", (req, res) => {
+  res.setHeader("Content-Type", "application/xml");
+  res.sendFile(path.join(process.cwd(), "public", "sitemap.xml"));
+});
+
 // Health Probe
 app.get("/api/health", (req, res) => {
   res.json({ status: "healthy", timestamp: new Date().toISOString() });
