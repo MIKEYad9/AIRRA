@@ -139,6 +139,130 @@ export default function LandingPage() {
     }, 6000);
   };
 
+  // Newsletter Subscription State
+  const [newsletterEmail, setNewsletterEmail] = React.useState("");
+  const [subscriptionStatus, setSubscriptionStatus] = React.useState<"idle" | "loading" | "success" | "error">("idle");
+  const [subscriptionMessage, setSubscriptionMessage] = React.useState("");
+
+  const handleNewsletterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsletterEmail.trim()) {
+      setSubscriptionStatus("error");
+      setSubscriptionMessage("Please enter a valid email address.");
+      return;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newsletterEmail.trim())) {
+      setSubscriptionStatus("error");
+      setSubscriptionMessage("Please enter a valid email address.");
+      return;
+    }
+
+    setSubscriptionStatus("loading");
+    setSubscriptionMessage("");
+
+    setTimeout(() => {
+      const existing = localStorage.getItem("airra_subscribers");
+      let list = [];
+      if (existing) {
+        try { list = JSON.parse(existing); } catch (err) {}
+      }
+      if (!list.includes(newsletterEmail.trim().toLowerCase())) {
+        list.push(newsletterEmail.trim().toLowerCase());
+        localStorage.setItem("airra_subscribers", JSON.stringify(list));
+      }
+      
+      setSubscriptionStatus("success");
+      setSubscriptionMessage("Sanctuary subscription registered. Welcome.");
+      setNewsletterEmail("");
+      
+      // Clear after 4 seconds
+      setTimeout(() => {
+        setSubscriptionStatus("idle");
+        setSubscriptionMessage("");
+      }, 4000);
+    }, 800);
+  };
+
+  // Inactivity Newsletter States
+  const [isInactivityModalOpen, setIsInactivityModalOpen] = React.useState(false);
+  const [modalEmail, setModalEmail] = React.useState("");
+  const [modalStatus, setModalStatus] = React.useState<"idle" | "loading" | "success" | "error">("idle");
+  const [modalMessage, setModalMessage] = React.useState("");
+
+  useEffect(() => {
+    const shown = sessionStorage.getItem("airra_inactivity_modal_seen");
+    if (shown === "true") return;
+
+    let inactivityTimer: NodeJS.Timeout;
+
+    const resetTimer = () => {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        if (sessionStorage.getItem("airra_inactivity_modal_seen") !== "true") {
+          setIsInactivityModalOpen(true);
+        }
+      }, 30000); // 30 seconds of user inactivity
+    };
+
+    const activityEvents = ["mousemove", "keydown", "mousedown", "scroll", "touchstart", "click"];
+
+    resetTimer();
+
+    activityEvents.forEach((event) => {
+      window.addEventListener(event, resetTimer);
+    });
+
+    return () => {
+      clearTimeout(inactivityTimer);
+      activityEvents.forEach((event) => {
+        window.removeEventListener(event, resetTimer);
+      });
+    };
+  }, []);
+
+  const handleModalNewsletterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!modalEmail.trim()) {
+      setModalStatus("error");
+      setModalMessage("Please enter a valid email address.");
+      return;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(modalEmail.trim())) {
+      setModalStatus("error");
+      setModalMessage("Please enter a valid email address.");
+      return;
+    }
+
+    setModalStatus("loading");
+    setModalMessage("");
+
+    setTimeout(() => {
+      const existing = localStorage.getItem("airra_subscribers");
+      let list = [];
+      if (existing) {
+        try { list = JSON.parse(existing); } catch (err) {}
+      }
+      if (!list.includes(modalEmail.trim().toLowerCase())) {
+        list.push(modalEmail.trim().toLowerCase());
+        localStorage.setItem("airra_subscribers", JSON.stringify(list));
+      }
+      
+      setModalStatus("success");
+      setModalMessage("Sanctuary subscription registered. Welcome.");
+      setModalEmail("");
+      sessionStorage.setItem("airra_inactivity_modal_seen", "true");
+      
+      // Auto close after 2.5 seconds
+      setTimeout(() => {
+        setIsInactivityModalOpen(false);
+      }, 2500);
+    }, 800);
+  };
+
   const { scrollYProgress } = useScroll();
 
   const heroScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.9]);
@@ -668,17 +792,57 @@ export default function LandingPage() {
 
           <div className="space-y-6 sm:space-y-10">
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-900 dark:text-zinc-400">Architecture</p>
-            <nav className="flex flex-col gap-4 sm:gap-6">
-               <Link to="#" className="text-xs sm:text-sm font-black uppercase tracking-widest text-zinc-800 hover:text-airra-primary dark:text-zinc-300 dark:hover:text-emerald-400 transition-all">Neuroscience</Link>
-               <Link to="#" className="text-xs sm:text-sm font-black uppercase tracking-widest text-zinc-800 hover:text-airra-primary dark:text-zinc-300 dark:hover:text-emerald-400 transition-all">The AI Model</Link>
-               <Link to="#" className="text-xs sm:text-sm font-black uppercase tracking-widest text-zinc-800 hover:text-airra-primary dark:text-zinc-300 dark:hover:text-emerald-400 transition-all">Sovereignty</Link>
-               <Link to="#" className="text-xs sm:text-sm font-black uppercase tracking-widest text-zinc-800 hover:text-airra-primary dark:text-zinc-300 dark:hover:text-emerald-400 transition-all">Handcrafting</Link>
+            <nav className="flex flex-col gap-6 sm:gap-7">
+              <div className="space-y-1.5">
+                <span className="text-xs sm:text-sm font-black uppercase tracking-widest text-zinc-900 dark:text-white block">Neuroscience</span>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[9px] font-mono font-black uppercase tracking-wider text-zinc-400">
+                  <Link to="/blog/privacy-first-journaling-mental-longevity" className="text-emerald-600 dark:text-emerald-400 hover:underline">Somatic Blog</Link>
+                  <span className="text-zinc-300 dark:text-zinc-700">•</span>
+                  <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6480749/" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors">Clinical Study</a>
+                  <span className="text-zinc-300 dark:text-zinc-700">•</span>
+                  <button onClick={() => setIsEfficacyModalOpen(true)} className="hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors cursor-pointer text-left font-sans font-black">Report</button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <span className="text-xs sm:text-sm font-black uppercase tracking-widest text-zinc-900 dark:text-white block">The AI Model</span>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[9px] font-mono font-black uppercase tracking-wider text-zinc-400">
+                  <Link to="/blog/de-escalating-burnout-clinical-conversational-ai" className="text-emerald-600 dark:text-emerald-400 hover:underline">Burnout Blog</Link>
+                  <span className="text-zinc-300 dark:text-zinc-700">•</span>
+                  <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9933064/" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors">Efficacy PMC</a>
+                  <span className="text-zinc-300 dark:text-zinc-700">•</span>
+                  <button onClick={() => setIsEfficacyModalOpen(true)} className="hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors cursor-pointer text-left font-sans font-black">Metrics</button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <span className="text-xs sm:text-sm font-black uppercase tracking-widest text-zinc-900 dark:text-white block">Sovereignty</span>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[9px] font-mono font-black uppercase tracking-wider text-zinc-400">
+                  <Link to="/blog/sovereignty-of-silence-digital-deceleration" className="text-emerald-600 dark:text-emerald-400 hover:underline">Deceleration Blog</Link>
+                  <span className="text-zinc-300 dark:text-zinc-700">•</span>
+                  <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9139194/" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors">SSI Logic</a>
+                  <span className="text-zinc-300 dark:text-zinc-700">•</span>
+                  <button onClick={() => setIsEfficacyModalOpen(true)} className="hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors cursor-pointer text-left font-sans font-black">Vault</button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <span className="text-xs sm:text-sm font-black uppercase tracking-widest text-zinc-900 dark:text-white block">Handcrafting</span>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[9px] font-mono font-black uppercase tracking-wider text-zinc-400">
+                  <Link to="/blog/cognitive-bio-resonance-interfaces" className="text-emerald-600 dark:text-emerald-400 hover:underline">Resonance Blog</Link>
+                  <span className="text-zinc-300 dark:text-zinc-700">•</span>
+                  <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC8340156/" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors">Visual PMC</a>
+                  <span className="text-zinc-300 dark:text-zinc-700">•</span>
+                  <button onClick={() => setIsEfficacyModalOpen(true)} className="hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors cursor-pointer text-left font-sans font-black">Specs</button>
+                </div>
+              </div>
             </nav>
           </div>
 
           <div className="space-y-6 sm:space-y-10">
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-900 dark:text-zinc-400">Sectors</p>
             <nav className="flex flex-col gap-4 sm:gap-6">
+               <Link to="/blog" className="text-xs sm:text-sm font-black uppercase tracking-widest text-[#2D6A4F] hover:text-airra-primary dark:text-emerald-400 dark:hover:text-emerald-300 transition-all">Sovereign Blog</Link>
                <Link to="/consultation" className="text-xs sm:text-sm font-black uppercase tracking-widest text-zinc-800 hover:text-airra-primary dark:text-zinc-300 dark:hover:text-emerald-400 transition-all">Therapy Sync</Link>
                <Link to="/journals" className="text-xs sm:text-sm font-black uppercase tracking-widest text-zinc-800 hover:text-airra-primary dark:text-zinc-300 dark:hover:text-emerald-400 transition-all">The Journal</Link>
                <Link to="/analytics" className="text-xs sm:text-sm font-black uppercase tracking-widest text-zinc-800 hover:text-airra-primary dark:text-zinc-300 dark:hover:text-emerald-400 transition-all">Analytics Hub</Link>
@@ -689,17 +853,39 @@ export default function LandingPage() {
           <div className="space-y-6 sm:space-y-10">
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-900 dark:text-zinc-400">Synthesis</p>
             <div className="p-6 sm:p-8 airra-bg dark:bg-zinc-900 rounded-[2rem] border border-airra-border dark:border-white/5 space-y-4 sm:space-y-6">
-               <p className="text-xs font-medium text-zinc-800 dark:text-zinc-400 leading-relaxed">Subscribe to our weekly philosophical meditation on technology and wellness.</p>
-               <div className="relative">
-                  <input 
-                    type="email" 
-                    placeholder="E-mail"
-                    className="w-full h-12 sm:h-14 bg-white dark:bg-zinc-800 rounded-xl px-5 sm:px-6 text-xs font-black uppercase tracking-widest text-airra-text dark:text-white border border-airra-border dark:border-white/5 focus:outline-none focus:border-airra-primary transition-all"
-                  />
-                  <button className="absolute right-1.5 top-1.5 h-9 w-9 sm:h-11 sm:w-11 bg-airra-text dark:bg-white text-airra-bg dark:text-zinc-950 rounded-lg flex items-center justify-center hover:opacity-90 transition-opacity">
-                    <ArrowUpRight size={18} />
-                  </button>
-               </div>
+               <p className="text-xs font-medium text-zinc-800 dark:text-zinc-400 leading-relaxed font-sans">Subscribe to our weekly philosophical meditations on technology, focus, and digital wellbeing.</p>
+               <form onSubmit={handleNewsletterSubmit} className="space-y-3">
+                 <div className="relative">
+                    <input 
+                      type="email" 
+                      placeholder="E-mail Address"
+                      value={newsletterEmail}
+                      onChange={(e) => setNewsletterEmail(e.target.value)}
+                      disabled={subscriptionStatus === "loading"}
+                      className="w-full h-12 sm:h-14 bg-white dark:bg-zinc-800 rounded-xl px-5 sm:px-6 text-xs font-black uppercase tracking-widest text-airra-text dark:text-white border border-airra-border dark:border-white/5 focus:outline-none focus:border-airra-primary transition-all disabled:opacity-50"
+                    />
+                    <button 
+                      type="submit"
+                      disabled={subscriptionStatus === "loading"}
+                      className="absolute right-1.5 top-1.5 h-9 w-9 sm:h-11 sm:w-11 bg-airra-text dark:bg-white text-airra-bg dark:text-zinc-950 rounded-lg flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
+                    >
+                      <ArrowUpRight size={18} />
+                    </button>
+                 </div>
+                 {subscriptionMessage && (
+                   <motion.p 
+                     initial={{ opacity: 0, y: -5 }} 
+                     animate={{ opacity: 1, y: 0 }} 
+                     className={`text-[10px] font-bold uppercase tracking-wider ${
+                       subscriptionStatus === 'success' 
+                         ? 'text-emerald-600 dark:text-emerald-400' 
+                         : 'text-rose-600 dark:text-rose-400'
+                     }`}
+                   >
+                     {subscriptionMessage}
+                   </motion.p>
+                 )}
+               </form>
             </div>
           </div>
         </div>
@@ -1144,6 +1330,92 @@ export default function LandingPage() {
                 </button>
               </div>
 
+            </motion.div>
+          </div>
+        )}
+
+        {isInactivityModalOpen && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setIsInactivityModalOpen(false);
+                sessionStorage.setItem("airra_inactivity_modal_seen", "true");
+              }}
+              className="absolute inset-0 bg-zinc-950/80 backdrop-blur-md"
+            />
+
+            {/* Modal Content */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", duration: 0.5 }}
+              className="relative w-full max-w-md rounded-[2.5rem] bg-white dark:bg-zinc-900 border border-airra-border dark:border-white/10 p-8 sm:p-10 shadow-airra-xl z-20 space-y-6 text-center"
+            >
+              {/* Header */}
+              <div className="space-y-3">
+                <div className="inline-flex items-center gap-2 text-[9px] font-mono font-black uppercase text-[#2D6A4F] dark:text-emerald-400 bg-[#E8F0EC]/80 dark:bg-emerald-950/40 px-3 py-1 rounded-full mx-auto">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Core Synthesis
+                </div>
+                <h3 className="text-xl sm:text-2xl font-display font-black uppercase tracking-tight text-slate-800 dark:text-white leading-tight">
+                  Subscribe to Weekly Insights
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed font-sans font-medium px-2">
+                  Take a moment to center yourself. Join thousands of subscribers receiving weekly meditations on digital balance, focus cultivation, and somatic privacy.
+                </p>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleModalNewsletterSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <input 
+                    type="email" 
+                    placeholder="E-mail Address"
+                    value={modalEmail}
+                    onChange={(e) => setModalEmail(e.target.value)}
+                    disabled={modalStatus === "loading"}
+                    className="w-full h-12 bg-slate-50 dark:bg-zinc-800 text-slate-850 dark:text-white rounded-xl px-4 text-xs font-black uppercase tracking-widest border border-airra-border dark:border-white/5 focus:outline-none focus:border-[#3DB88A] transition-all disabled:opacity-50 text-center"
+                  />
+                  {modalMessage && (
+                    <motion.p 
+                      initial={{ opacity: 0, y: -5 }} 
+                      animate={{ opacity: 1, y: 0 }} 
+                      className={`text-[10px] font-bold uppercase tracking-wider ${
+                        modalStatus === 'success' 
+                          ? 'text-emerald-600 dark:text-emerald-400' 
+                          : 'text-rose-600 dark:text-rose-400'
+                      }`}
+                    >
+                      {modalMessage}
+                    </motion.p>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-2.5 pt-2">
+                  <button 
+                    type="submit"
+                    disabled={modalStatus === "loading" || modalStatus === "success"}
+                    className="w-full h-12 bg-[#3DB88A] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:opacity-95 transition-opacity disabled:opacity-50 shadow-md flex items-center justify-center gap-2"
+                  >
+                    {modalStatus === "loading" ? "Subscribing..." : modalStatus === "success" ? "Subscribed" : "Receive Sovereign Insights"}
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsInactivityModalOpen(false);
+                      sessionStorage.setItem("airra_inactivity_modal_seen", "true");
+                    }}
+                    className="text-[9px] text-zinc-400 hover:text-zinc-650 dark:hover:text-zinc-200 transition-colors uppercase font-mono font-black tracking-widest pt-1"
+                  >
+                    No thanks, continue in silence
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}

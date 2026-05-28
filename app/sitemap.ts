@@ -42,5 +42,35 @@ export default function sitemap() {
       changeFrequency: 'daily',
       priority: 0.9,
     },
+    {
+      url: 'https://airra-beryl.vercel.app/blog',
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
+      url: 'https://airra-beryl.vercel.app/blog/sovereignty-of-silence-digital-deceleration',
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
+      url: 'https://airra-beryl.vercel.app/blog/privacy-first-journaling-mental-longevity',
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
+      url: 'https://airra-beryl.vercel.app/blog/deescalating-burnout-clinical-conversational-ai',
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
+      url: 'https://airra-beryl.vercel.app/blog/cognitive-bio-resonance-interfaces',
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
   ]
 }

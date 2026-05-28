@@ -27,6 +27,18 @@
         "lastSyncedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["syncId", "userId", "service", "status"]
+    },
+    "NewsletterSubscriber": {
+      "title": "NewsletterSubscriber",
+      "description": "Weekly insights newsletter subscriber record",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "subscribedAt": { "type": "string", "format": "date-time" },
+        "active": { "type": "boolean" },
+        "source": { "type": "string" }
+      },
+      "required": ["email", "subscribedAt", "active"]
     }
   },
   "firestore": {
@@ -37,6 +49,10 @@
     "/users/{userId}/syncs/{syncId}": {
       "schema": "WorkspaceSync",
       "description": "Workspace sync histories"
+    },
+    "/subscribers/{subscriberId}": {
+      "schema": "NewsletterSubscriber",
+      "description": "Weekly insights subscriber emails"
     }
   }
 }

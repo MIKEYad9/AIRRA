@@ -36,6 +36,7 @@ export default function Navbar() {
         <Link to="/" className="px-6 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors rounded-full hover:bg-airra-bg dark:hover:bg-zinc-800 text-airra-text dark:text-white">Home</Link>
         <Link to="/#features" className="px-6 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors rounded-full hover:bg-airra-bg dark:hover:bg-zinc-800 text-airra-muted">Features</Link>
         <Link to="/pricing" className="px-6 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors rounded-full hover:bg-airra-bg dark:hover:bg-zinc-800 text-airra-muted">Pricing</Link>
+        <Link to="/blog" className="px-6 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors rounded-full hover:bg-airra-bg dark:hover:bg-zinc-800 text-airra-muted">Blog</Link>
       </div>
 
       <div className="flex items-center gap-6">

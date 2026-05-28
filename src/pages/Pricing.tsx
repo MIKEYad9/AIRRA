@@ -60,6 +60,17 @@ export default function Pricing() {
 
   useEffect(() => {
     trackConversionFunnel("PRICING_VIEW", { currentPlan: subscription?.plan_type || "free" });
+    // Dynamic Page-Level SEO Metadata Updates
+    document.title = "AIRRA Pricing | AI Digital Wellbeing Plans & Premium Subscriptions";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute("content", "Explore AIRRA Sanctuary pricing plans for immersive AI-powered digital wellbeing, neural logs, dynamic diagnostics, and priority premium interactions.");
+    } else {
+      const meta = document.createElement('meta');
+      meta.name = "description";
+      meta.content = "Explore AIRRA Sanctuary pricing plans for immersive AI-powered digital wellbeing, neural logs, dynamic diagnostics, and priority premium interactions.";
+      document.head.appendChild(meta);
+    }
   }, [subscription]);
 
   const loadRazorpay = () => {
@@ -230,6 +241,150 @@ export default function Pricing() {
               </motion.div>
             );
           })}
+        </div>
+
+        {/* Rich SEO Content, Feature Comparison, and FAQ Section */}
+        <div className="border-t border-airra-border/20 dark:border-white/5 pt-20 space-y-20">
+          
+          {/* Detailed Platform Benefits */}
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+            <div className="space-y-6">
+              <span className="font-mono text-xs text-emerald-500 uppercase tracking-widest font-bold">Aesthetic Architecture</span>
+              <h2 className="text-3xl md:text-5xl font-display font-extrabold tracking-tight text-airra-text dark:text-white uppercase">
+                The Science of Digital Wellness
+              </h2>
+              <p className="text-zinc-700 dark:text-zinc-300 font-medium leading-relaxed">
+                AIRRA is built from the ground up to restore cognitive balance in an over-connected world. Our plans provide users with dedicated server-side neural nodes that run our specialized non-clinical emotional sanctuary model. By choosing a plan, you support the continuous handcrafting and hosting of privacy-first, zero-surveillance artificial intelligence.
+              </p>
+              <p className="text-zinc-700 dark:text-zinc-300 font-medium leading-relaxed">
+                Unlike standard hyperactive platforms designed to capture and monetize user attention, AIRRA aims to decrease screen fatigue through spacious design, silent focus tools, visual grounding modules, and highly restricted AI pacing. Every interaction has breathing room, ensuring you log off feeling centered rather than overstimulated.
+              </p>
+            </div>
+            
+            <div className="bg-airra-surface dark:bg-zinc-900 border border-airra-border/40 dark:border-zinc-800 rounded-[2.5rem] p-8 md:p-12 space-y-8">
+              <h3 className="text-xl font-display font-black text-airra-text dark:text-white uppercase tracking-tight">Key Platform Foundations</h3>
+              <ul className="space-y-6">
+                <li className="flex gap-4">
+                  <span className="font-mono text-emerald-500 font-bold">01</span>
+                  <div>
+                    <h4 className="font-bold text-zinc-900 dark:text-zinc-100">Cognitive Sovereignty</h4>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">Full control of your neural archives. No automated selling, mining, or public exposure of your diagnostic history.</p>
+                  </div>
+                </li>
+                <li className="flex gap-4">
+                  <span className="font-mono text-emerald-500 font-bold">02</span>
+                  <div>
+                    <h4 className="font-bold text-zinc-900 dark:text-zinc-100">Neural Mood Calibration</h4>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">Real-time tone customization matching biometric sentiment vectors for ultimate interactive resonance.</p>
+                  </div>
+                </li>
+                <li className="flex gap-4">
+                  <span className="font-mono text-emerald-500 font-bold">03</span>
+                  <div>
+                    <h4 className="font-bold text-zinc-900 dark:text-zinc-100">Pure Deceleration Hub</h4>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">No infinity scrolls, badges, gamification noise, or attention-grabbing notifications.</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          {/* Feature Matrix Grid */}
+          <section className="space-y-8">
+            <div className="text-center space-y-4">
+              <span className="font-mono text-xs text-emerald-500 uppercase tracking-widest font-bold">Comprehensive Outlines</span>
+              <h2 className="text-2xl md:text-3xl font-display font-extrabold text-airra-text dark:text-white uppercase tracking-tight">Technical Feature Comparison Matrix</h2>
+            </div>
+            
+            <div className="overflow-x-auto rounded-[2rem] border border-airra-border/40 dark:border-zinc-800 bg-airra-surface/50 dark:bg-zinc-900/40">
+              <table className="w-full text-left border-collapse min-w-[600px] text-sm">
+                <thead>
+                  <tr className="border-b border-airra-border/40 dark:border-zinc-800 bg-airra-surface dark:bg-zinc-900">
+                    <th className="p-6 font-display font-black uppercase text-xs tracking-wider">Features & Capabilities</th>
+                    <th className="p-6 font-display font-black uppercase text-xs tracking-wider">Standard Archive</th>
+                    <th className="p-6 font-display font-black uppercase text-xs tracking-wider text-emerald-500">Advanced Cognition</th>
+                    <th className="p-6 font-display font-black uppercase text-xs tracking-wider">Infinite Resonance</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-airra-border/40 dark:divide-zinc-800">
+                  <tr>
+                    <td className="p-6 font-bold">Daily AI Interaction sequences</td>
+                    <td className="p-6 text-zinc-600 dark:text-zinc-400">10 daily queries</td>
+                    <td className="p-6 font-bold text-emerald-500">Unlimited sessions</td>
+                    <td className="p-6">Unlimited + Founding priority</td>
+                  </tr>
+                  <tr>
+                    <td className="p-6 font-bold">Cognitive Mood Mapping Vector</td>
+                    <td className="p-6 text-zinc-600 dark:text-zinc-400">Basic tracker</td>
+                    <td className="p-6 font-bold text-emerald-500">Full multidimensional mapping</td>
+                    <td className="p-6">Full historic trend logs</td>
+                  </tr>
+                  <tr>
+                    <td className="p-6 font-bold">End-to-End Cryptography</td>
+                    <td className="p-6">Standard AES-256</td>
+                    <td className="p-6 font-bold text-emerald-500">Zero-knowledge host isolation</td>
+                    <td className="p-6 font-bold">Lifetime absolute trust protocol</td>
+                  </tr>
+                  <tr>
+                    <td className="p-6 font-bold">Audio & Spatial Meditation Loops</td>
+                    <td className="p-6 text-zinc-600 dark:text-zinc-400">Incompatible</td>
+                    <td className="p-6 font-bold text-emerald-500">Complete access catalog</td>
+                    <td className="p-6">Complete + Custom requests</td>
+                  </tr>
+                  <tr>
+                    <td className="p-6 font-bold">Priority Update Access Node</td>
+                    <td className="p-6 text-zinc-600 dark:text-zinc-400">Standard cycle</td>
+                    <td className="p-6 font-bold text-emerald-500">Active priority cluster</td>
+                    <td className="p-6 font-extrabold text-emerald-400">Immediate beta-tier sync</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* Deep-dive FAQ Accordion/Grid */}
+          <section className="space-y-12">
+            <div className="space-y-4 text-center">
+              <span className="font-mono text-xs text-emerald-500 uppercase tracking-widest font-bold">Answering Questions</span>
+              <h2 className="text-3xl md:text-5xl font-display font-extrabold text-zinc-900 dark:text-white uppercase tracking-tight">Frequently Asked Questions</h2>
+              <p className="text-sm text-zinc-650 dark:text-zinc-400 max-w-xl mx-auto">Explore detailed technical and ethical disclosures regarding our subscription nodes and cognitive wellness structures.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="p-8 rounded-[2rem] bg-airra-surface/80 dark:bg-zinc-900 border border-airra-border/40 dark:border-zinc-800 space-y-3">
+                <h4 className="font-display font-black text-base uppercase text-zinc-900 dark:text-white tracking-tight">How does AIRRA guarantee emotional cognitive privacy?</h4>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  AIRRA utilizes zero-knowledge database tunnels integrated over secure end-to-end cloud containers. Your personal expressions, cognitive logs, daily deep reflections, and session reports are entirely encapsulated at the host-node layer. No telemetry trackers, profiling cookies, or external advertising scripts are integrated. Our models run on decentralized non-coercive architectures where your data remains exclusively yours under standard AES-256 standards.
+                </p>
+              </div>
+
+              <div className="p-8 rounded-[2rem] bg-airra-surface/80 dark:bg-zinc-900 border border-airra-border/40 dark:border-zinc-800 space-y-3">
+                <h4 className="font-display font-black text-base uppercase text-zinc-900 dark:text-white tracking-tight">What are AI sequences and neural logs exactly?</h4>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  AI sequences are carefully modulated real-time token outputs that generate calming biofeedback loops, interactive wellness practices, and personalized meditation journeys. A neural mood log is a deep multidimensional vector representing your current psychological focus, sentiment trend, and ambient resonance, allowing the application to adjust color tones, advice frequency, and visual soundscapes automatically.
+                </p>
+              </div>
+
+              <div className="p-8 rounded-[2rem] bg-airra-surface/80 dark:bg-zinc-900 border border-airra-border/40 dark:border-zinc-800 space-y-3">
+                <h4 className="font-display font-black text-base uppercase text-zinc-900 dark:text-white tracking-tight">Is there any contracts, lock-ins, or payment latency?</h4>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  No. Our subscription models are designed for sovereign control. You may alter or decouple your active access frequency at any time directly through the profile interface. All transitions and premium updates processed via our Razorpay integration update instantly, initializing your elevated cognitive sequences across server nodes within seconds.
+                </p>
+              </div>
+
+              <div className="p-8 rounded-[2rem] bg-airra-surface/80 dark:bg-zinc-900 border border-airra-border/40 dark:border-zinc-800 space-y-3">
+                <h4 className="font-display font-black text-base uppercase text-zinc-900 dark:text-white tracking-tight">How do the wellness plans translate to mental longevity?</h4>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  Wellness is more than an absence of stress—it is the active alignment of focus, breath, and digital interaction. Daily micro-reflections, intentional physical diagnostics, and custom journaling prompts help prevent screen-time fatigue and visual sensory overload typical of modern high-engagement communication platforms.
+                </p>
+              </div>
+            </div>
+            
+            <div className="text-center pt-6">
+              <p className="text-xs text-emerald-500 font-bold font-mono">STILL CURIOUS? CONTACT ACCESS PROTOCOLS AT WELCOME@AIRRA-BERYL.VERCEL.APP</p>
+            </div>
+          </section>
+          
         </div>
 
         <footer className="text-center space-y-6 pt-12">

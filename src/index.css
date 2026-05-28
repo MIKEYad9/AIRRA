@@ -184,4 +184,19 @@ h1 {
   .animate-breathe {
     animation: breathe 10s ease-in-out infinite;
   }
+
+  /* SEO-Optimized Article Prose Typography Rules to Maximize Readability */
+  .prose > p {
+    line-height: 1.8 !important;
+    letter-spacing: 0.01em !important;
+    color: #172D24 !important; /* Deep therapeutic charcoal green */
+  }
+
+  .dark .prose.dark\:prose-invert > p,
+  .dark .prose p,
+  .prose.dark\:prose-invert > p {
+    line-height: 1.8 !important;
+    letter-spacing: 0.01em !important;
+    color: #F4F4F5 !important; /* High-contrast off-white readability */
+  }
 }

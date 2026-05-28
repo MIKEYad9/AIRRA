@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://airra-beryl.vercel.app/sitemap.xml

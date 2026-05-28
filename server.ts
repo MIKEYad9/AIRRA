@@ -59,6 +59,12 @@ app.get("/sitemap.xml", (req, res) => {
   res.sendFile(path.join(process.cwd(), "public", "sitemap.xml"));
 });
 
+// Robots Endpoint
+app.get("/robots.txt", (req, res) => {
+  res.setHeader("Content-Type", "text/plain");
+  res.sendFile(path.join(process.cwd(), "public", "robots.txt"));
+});
+
 // Health Probe
 app.get("/api/health", (req, res) => {
   res.json({ status: "healthy", timestamp: new Date().toISOString() });

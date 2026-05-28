@@ -23,6 +23,8 @@ import SavedSessions from "@/src/pages/SavedSessions";
 import Profile from "@/src/pages/Profile";
 import WorkspacePortal from "@/src/pages/WorkspacePortal";
 import AdminBeta from "@/src/pages/AdminBeta";
+import BlogList from "@/src/pages/BlogList";
+import BlogPost from "@/src/pages/BlogPost";
 
 export default function App() {
   return (
@@ -35,6 +37,8 @@ export default function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/pricing" element={<Pricing />} />
+              <Route path="/blog" element={<BlogList />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
               <Route 
                 path="/onboarding" 
                 element={

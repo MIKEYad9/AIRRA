@@ -15,5 +15,14 @@ service cloud.firestore {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
+
+    // Secure newsletter subscribers
+    match /subscribers/{subscriberId} {
+      allow create: if request.resource.data.email is string 
+                    && request.resource.data.email.size() <= 256
+                    && request.resource.data.active == true
+                    && request.resource.data.subscribedAt == request.time;
+      allow read, update, delete: if false;
+    }
   }
 }
