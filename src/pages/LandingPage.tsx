@@ -203,7 +203,7 @@ export default function LandingPage() {
         if (sessionStorage.getItem("airra_inactivity_modal_seen") !== "true") {
           setIsInactivityModalOpen(true);
         }
-      }, 30000); // 30 seconds of user inactivity
+      }, 60000); // 60 seconds of user inactivity
     };
 
     const activityEvents = ["mousemove", "keydown", "mousedown", "scroll", "touchstart", "click"];
@@ -784,9 +784,9 @@ export default function LandingPage() {
               Handcrafting cognitive sanctuaries through deep-neural intelligence.
             </p>
             <div className="flex gap-4 sm:gap-6">
-              <Link to="#" className="w-12 h-12 rounded-xl bg-airra-bg dark:bg-zinc-900 flex items-center justify-center text-zinc-805 hover:text-airra-text dark:text-zinc-400 dark:hover:text-white transition-all"><Star size={20} /></Link>
-              <Link to="#" className="w-12 h-12 rounded-xl bg-airra-bg dark:bg-zinc-900 flex items-center justify-center text-zinc-805 hover:text-airra-text dark:text-zinc-400 dark:hover:text-white transition-all"><Compass size={20} /></Link>
-              <Link to="#" className="w-12 h-12 rounded-xl bg-airra-bg dark:bg-zinc-900 flex items-center justify-center text-zinc-805 hover:text-airra-text dark:text-zinc-400 dark:hover:text-white transition-all"><Activity size={20} /></Link>
+              <Link to="#" className="w-12 h-12 rounded-xl bg-airra-bg dark:bg-zinc-900 flex items-center justify-center text-zinc-500 hover:text-airra-text dark:text-zinc-400 dark:hover:text-white transition-all"><Star size={20} /></Link>
+              <Link to="#" className="w-12 h-12 rounded-xl bg-airra-bg dark:bg-zinc-900 flex items-center justify-center text-zinc-500 hover:text-airra-text dark:text-zinc-400 dark:hover:text-white transition-all"><Compass size={20} /></Link>
+              <Link to="#" className="w-12 h-12 rounded-xl bg-airra-bg dark:bg-zinc-900 flex items-center justify-center text-zinc-500 hover:text-airra-text dark:text-zinc-400 dark:hover:text-white transition-all"><Activity size={20} /></Link>
             </div>
           </div>
 

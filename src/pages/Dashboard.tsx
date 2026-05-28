@@ -24,7 +24,9 @@ import {
   ArrowRight,
   Moon,
   Clock,
-  Focus
+  Focus,
+  FileText,
+  CheckCircle2
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -276,6 +278,78 @@ export default function Dashboard() {
         setAnimateStreak(false);
       }, 4000);
     }
+  };
+
+  // Dynamic resonance matching algorithm
+  const getRecommendedSpecialists = () => {
+    const goal = profile?.mood_goal?.toLowerCase() || "";
+    // default matching scores
+    let drVanceScore = 82;
+    let drThorneScore = 80;
+    let drKincaidScore = 78;
+    let drSterlingScore = 85;
+
+    if (goal.includes("creativity") || goal.includes("focus") || goal.includes("cognitive") || goal.includes("flow")) {
+      drVanceScore += 16;
+    }
+    if (goal.includes("stress") || goal.includes("tension") || goal.includes("calm") || goal.includes("anxiety")) {
+      drThorneScore += 18;
+    }
+    if (goal.includes("sleep") || goal.includes("rest") || goal.includes("insomnia") || goal.includes("circadian")) {
+      drKincaidScore += 19;
+    }
+    if (goal.includes("emotional") || goal.includes("resilience") || goal.includes("trauma") || goal.includes("boundaries")) {
+      drSterlingScore += 15;
+    }
+
+    const specialists = [
+      {
+        id: "sc-01",
+        name: "Dr. Evelyn Vance",
+        specialty: "Cognitive Flow & Deep Creativity",
+        bio: "Pioneering therapeutic protocols to raise high-amplitude alpha brainwave states of peak intellectual mastery and neuroplastic flow.",
+        avatar_url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400",
+        score: Math.min(99, drVanceScore),
+        tag: "Alpha Harmony Resonance",
+        reason: "Highly attuned with your Cognitive Flow focus and alpha-symmetry targets.",
+        report: "Neuro-Wellness Assessment (Alpha Sync Focus)"
+      },
+      {
+        id: "sc-02",
+        name: "Dr. Aris Thorne",
+        specialty: "Autonomic Balance & Vagal Regulation",
+        bio: "Clinical psychologist specializing in biofeedback mapping and sensory de-escalation for deep stress, hyper-arousal, and somatic relief.",
+        avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400",
+        score: Math.min(99, drThorneScore),
+        tag: "Vagal Autonomic Attunement",
+        reason: "Optimal alignment for autonomic restoration index and vagal toning.",
+        report: "Cognitive Trend Analysis (Prefrontal Load)"
+      },
+      {
+        id: "sc-03",
+        name: "Dr. Liam Kincaid",
+        specialty: "Circadian Rhythm & Sleep Architecture",
+        bio: "Circadian researcher specialized in non-pharmacological delta-wave entrainment, bio-luminance timing, and deep nocturnal repair.",
+        avatar_url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=400",
+        score: Math.min(99, drKincaidScore),
+        tag: "Delta Restorative Synapse",
+        reason: "Highest cohesion to optimize sleep cycles and nocturnal recovery indexes.",
+        report: "Sleep Architecture Report (Vagal Coherence)"
+      },
+      {
+        id: "sc-04",
+        name: "Dr. Naida Sterling",
+        specialty: "Emotional Sovereignty & Resilience",
+        bio: "Helping high-performance creators design safe mental capsules, resolve deep sentiment blocks, and construct stable personal boundaries.",
+        avatar_url: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=400",
+        score: Math.min(99, drSterlingScore),
+        tag: "Sovereign Emotional Integration",
+        reason: "Deep alignment with emotional processing goals and self-boundary resilience.",
+        report: "Diagnostic Sovereignty Profile"
+      }
+    ];
+
+    return specialists.sort((a, b) => b.score - a.score);
   };
 
   const firstName = profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'Guest';
@@ -719,7 +793,127 @@ export default function Dashboard() {
                 Neural Sync Interface
               </h2>
             </div>
-            <AIChat />
+          </section>
+
+          {/* Specialist Resonance Alignment Section */}
+          <section className="space-y-10 mb-20">
+            <div className="flex items-center justify-between">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-airra-muted flex items-center gap-4">
+                <div className="w-8 h-[1px] bg-airra-border" />
+                Resonant Specialist Match Engine
+              </h2>
+              <span className="text-[9px] font-mono font-black uppercase tracking-widest text-[#3DB88A] bg-[#3DB88A]/10 px-2.5 py-1 rounded-full border border-[#3DB88A]/20 font-bold">
+                ACTIVE COHERENCE MATCH
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {getRecommendedSpecialists().slice(0, 2).map((specialist, idx) => {
+                const isPrimary = idx === 0;
+                return (
+                  <motion.div
+                    key={specialist.id}
+                    whileHover={{ y: -6 }}
+                    className={`airra-card p-8 md:p-10 border relative overflow-hidden flex flex-col justify-between group h-full transition-all duration-300 ${
+                      isPrimary 
+                        ? 'border-emerald-500/20 bg-gradient-to-br from-[#0C1B14] to-zinc-950 text-white shadow-[0_0_30px_rgba(16,185,129,0.1)]' 
+                        : 'border-airra-border/45 dark:border-white/5 bg-white dark:bg-zinc-900/40 text-slate-800 dark:text-zinc-100'
+                    }`}
+                  >
+                    {/* Glowing background spheres for high-level resonance feeling */}
+                    <div className={`absolute -right-16 -bottom-16 w-48 h-48 rounded-full blur-[90px] pointer-events-none transition-opacity duration-300 group-hover:opacity-100 ${
+                      isPrimary ? 'bg-emerald-500/10' : 'bg-airra-primary/5'
+                    }`} />
+
+                    <div className="space-y-6 relative z-10">
+                      {/* Top status bar */}
+                      <div className="flex items-center justify-between gap-3">
+                        <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full font-mono ${
+                          isPrimary 
+                            ? 'bg-emerald-950/60 border border-emerald-800/20 text-[#3DB88A]' 
+                            : 'bg-slate-100 dark:bg-zinc-950 text-slate-500 dark:text-zinc-400 border border-slate-200/50 dark:border-white/5'
+                        }`}>
+                          {specialist.tag}
+                        </span>
+                        <div className="flex items-baseline gap-1">
+                          <span className={`text-2xl font-display font-black leading-none ${isPrimary ? 'text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
+                            {specialist.score}%
+                          </span>
+                          <span className={`text-[8px] font-mono font-bold uppercase ${isPrimary ? 'text-emerald-500/70' : 'text-slate-400'}`}>
+                            Match
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Specialist Info */}
+                      <div className="flex items-center gap-4 pt-3 text-left">
+                        <div className="relative shrink-0">
+                          <img 
+                            src={specialist.avatar_url} 
+                            alt={specialist.name} 
+                            referrerPolicy="no-referrer"
+                            className="w-16 h-16 rounded-2xl object-cover border-2 border-slate-200 dark:border-white/10 group-hover:scale-105 transition-transform duration-300"
+                          />
+                          {isPrimary && (
+                            <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-zinc-950 flex items-center justify-center text-[7px] font-black text-white">✓</span>
+                          )}
+                        </div>
+                        <div className="text-left space-y-1">
+                          <h3 className={`text-lg font-display font-black uppercase tracking-tight ${isPrimary ? 'text-white' : 'text-slate-900 dark:text-white'}`}>
+                            {specialist.name}
+                          </h3>
+                          <p className={`text-[10px] font-mono font-bold uppercase tracking-widest ${isPrimary ? 'text-emerald-350 dark:text-emerald-450' : 'text-airra-primary'}`}>
+                            {specialist.specialty}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Dynamic Matching Logic Callout */}
+                      <div className={`p-4 rounded-2xl border text-[11px] leading-relaxed select-none text-left ${
+                        isPrimary 
+                          ? 'bg-emerald-950/30 border-emerald-900/30 text-emerald-200/80 font-medium' 
+                          : 'bg-slate-50 dark:bg-zinc-950/60 border-slate-200/50 dark:border-white/5 text-slate-600 dark:text-zinc-400 font-medium'
+                      }`}>
+                        <div className="flex items-center gap-1.5 font-bold uppercase text-[8px] tracking-widest mb-1 font-mono text-[#3DB88A] shrink-0">
+                          <BrainCircuit size={10} /> Resonance Reason
+                        </div>
+                        {specialist.reason}
+                      </div>
+
+                      {/* Scientific Report Affinity */}
+                      <div className="flex items-center gap-2 pt-1 font-mono text-[9px] uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                        <FileText size={12} className={isPrimary ? "text-[#3DB88A]" : "text-slate-400"} />
+                        <span>Affinitive Report: <strong>{specialist.report}</strong></span>
+                      </div>
+                    </div>
+
+                    <div className="pt-8 relative z-10 mt-auto">
+                      <button
+                        onClick={() => navigate("/consultation")}
+                        className={`w-full h-14 rounded-2xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 cursor-pointer transition-all duration-300 active:scale-[0.98] ${
+                          isPrimary
+                            ? 'bg-[#3DB88A] hover:bg-[#32a479] text-white shadow-lg shadow-emerald-950/20'
+                            : 'bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200'
+                        }`}
+                      >
+                        Request Alignment Sync
+                        <ArrowRight size={12} />
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </section>
+
+          <section>
+             <div className="flex items-center justify-between mb-10">
+               <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-airra-muted flex items-center gap-4">
+                 <div className="w-8 h-[1px] bg-airra-border" />
+                 Neural Sync Interface
+               </h2>
+             </div>
+             <AIChat />
           </section>
         </div>
 

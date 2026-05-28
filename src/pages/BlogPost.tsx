@@ -202,7 +202,7 @@ export default function BlogPost() {
           <div className="flex flex-wrap items-center gap-6 text-[10px] sm:text-xs font-mono text-zinc-650 dark:text-zinc-400 font-bold uppercase tracking-wider border-y border-airra-border/20 dark:border-white/5 py-4">
             <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> Published {post.publishedAt}</span>
             <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Read Time: {post.readTime}</span>
-            <span className="h-4 w-px bg-airra-border/20 dark:bg-zinc-805 hidden sm:block" />
+            <span className="h-4 w-px bg-airra-border/20 dark:bg-zinc-800 hidden sm:block" />
             <span className="h-6 px-3 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center justify-center">
               {post.category}
             </span>

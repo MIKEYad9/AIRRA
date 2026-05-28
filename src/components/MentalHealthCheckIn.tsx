@@ -111,7 +111,7 @@ export default function MentalHealthCheckIn({ onLogged }: { onLogged?: () => voi
                     className={`flex flex-col items-center p-5 sm:p-6 rounded-[2rem] transition-all duration-300 group/item relative overflow-hidden border ${
                       isSelected 
                         ? 'bg-airra-text dark:bg-white border-transparent text-airra-bg dark:text-zinc-900 shadow-airra-lg scale-[1.03]' 
-                        : 'bg-airra-bg/20 dark:bg-zinc-900/20 border-airra-border/10 dark:border-white/5 hover:bg-white/60 dark:hover:bg-zinc-805/60 hover:scale-[1.02]'
+                        : 'bg-airra-bg/20 dark:bg-zinc-900/20 border-airra-border/10 dark:border-white/5 hover:bg-white/60 dark:hover:bg-zinc-800/60 hover:scale-[1.02]'
                     } ${loading ? 'opacity-30 cursor-not-allowed' : ''}`}
                   >
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3.5 transition-all duration-300 ${

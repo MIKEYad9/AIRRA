@@ -215,6 +215,32 @@ export default function DiagnosticScreen() {
 
           </div>
 
+          {/* Specialist Resonance Recommendation Callout */}
+          <div className="airra-card p-12 bg-[#0C1B14] border border-[#1C2C24] rounded-[2.5rem] relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-12 group">
+            <div className="absolute top-0 left-0 w-64 h-64 bg-emerald-700/10 blur-[100px] pointer-events-none" />
+            <div className="absolute bottom-0 right-0 w-64 h-64 bg-[#3DB88A]/5 blur-[120px] pointer-events-none" />
+            
+            <div className="space-y-6 max-w-2xl relative z-10 text-center lg:text-left">
+              <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-emerald-950/40 border border-[#2D6A4F]/30 text-emerald-450 text-[9px] font-mono font-black uppercase tracking-widest mx-auto lg:mx-0">
+                <BrainCircuit className="w-3.5 h-3.5" /> Curated Clinical Synchronization
+              </div>
+              <h3 className="text-3xl sm:text-4xl font-display font-black uppercase tracking-tighter text-white leading-none">
+                Resonant Specialists Attuned to Your Profile.
+              </h3>
+              <p className="text-emerald-200/60 font-medium text-base sm:text-lg leading-relaxed">
+                Your report indicates high alpha-coherence. We have prioritized specialist recommendations including <strong className="text-white dark:text-emerald-400">Dr. Evelyn Vance</strong> and custom Vagostimulation practitioners specifically matching your cognitive targets and reports.
+              </p>
+            </div>
+
+            <button
+              onClick={() => navigate("/consultation")}
+              className="h-20 px-10 rounded-2xl bg-[#3DB88A] text-white hover:bg-[#3DB88A]/95 text-xs font-black uppercase tracking-[0.25em] flex items-center gap-4 transition-all duration-300 transform lg:group-hover:scale-105 shadow-xl relative z-10 w-full sm:w-auto justify-center cursor-pointer flex-shrink-0"
+            >
+              Consult Attuned Experts
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+
         </motion.div>
       )}
 

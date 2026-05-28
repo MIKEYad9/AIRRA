@@ -25,11 +25,13 @@ import WorkspacePortal from "@/src/pages/WorkspacePortal";
 import AdminBeta from "@/src/pages/AdminBeta";
 import BlogList from "@/src/pages/BlogList";
 import BlogPost from "@/src/pages/BlogPost";
+import GlobalInactivityModal from "@/src/components/GlobalInactivityModal";
 
 export default function App() {
   return (
     <AuthProvider>
       <Router>
+        <GlobalInactivityModal />
         <div className="flex flex-col min-h-screen atmosphere-bg">
           <Navbar />
           <main className="flex-grow">

@@ -194,9 +194,29 @@ h1 {
 
   .dark .prose.dark\:prose-invert > p,
   .dark .prose p,
-  .prose.dark\:prose-invert > p {
+  .prose.dark\:prose-invert > p,
+  .prose.dark\:prose-invert p {
     line-height: 1.8 !important;
     letter-spacing: 0.01em !important;
     color: #F4F4F5 !important; /* High-contrast off-white readability */
+  }
+
+  /* Premium drop-cap for editorial elegance on first paragraph of all wellness articles */
+  .prose.dark\:prose-invert > p:first-of-type::first-letter,
+  .prose > p:first-of-type::first-letter {
+    font-size: 3.8rem !important;
+    font-weight: 900 !important;
+    float: left !important;
+    line-height: 0.82 !important;
+    margin-top: 5px !important;
+    margin-right: 12px !important;
+    font-family: var(--font-serif) !important;
+    color: #2D6A4F !important; /* Light theme premium green */
+    text-transform: uppercase;
+  }
+
+  .dark .prose.dark\:prose-invert > p:first-of-type::first-letter,
+  .dark .prose > p:first-of-type::first-letter {
+    color: #3DB88A !important; /* Vibrant emerald accent for contrast in dark mode */
   }
 }
