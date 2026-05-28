@@ -401,7 +401,7 @@ export default function LandingPage() {
                   <span className="text-[8px] sm:text-[9px] font-mono font-black uppercase text-[#2D6A4F] dark:text-emerald-400 bg-[#E8F0EC]/80 dark:bg-emerald-950/40 px-2.5 py-1 rounded-md">
                     Anxiety Mitigation
                   </span>
-                  <span className="text-[8px] sm:text-[9px] font-mono text-slate-400 dark:text-zinc-500 font-bold">PMC9933064</span>
+                  <span className="text-[8px] sm:text-[9px] font-mono text-slate-600 dark:text-zinc-400 font-extrabold text-right sm:text-[10px]">PMC9933064</span>
                 </div>
                 <h4 className="text-base sm:text-lg font-display font-black text-slate-800 dark:text-white uppercase tracking-tight leading-snug">Systematic Meta-Analysis</h4>
                 <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium leading-relaxed">
@@ -426,7 +426,7 @@ export default function LandingPage() {
                   <span className="text-[8px] sm:text-[9px] font-mono font-black uppercase text-[#2D6A4F] dark:text-emerald-400 bg-[#E8F0EC]/80 dark:bg-emerald-950/40 px-2.5 py-1 rounded-md">
                     Therapeutic Alliance
                   </span>
-                  <span className="text-[8px] sm:text-[9px] font-mono text-slate-400 dark:text-zinc-500 font-bold">PMC9715502</span>
+                  <span className="text-[8px] sm:text-[9px] font-mono text-slate-600 dark:text-zinc-400 font-extrabold text-right sm:text-[10px]">PMC9715502</span>
                 </div>
                 <h4 className="text-base sm:text-lg font-display font-black text-slate-800 dark:text-white uppercase tracking-tight leading-snug">Virtual Companion Bonds</h4>
                 <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium leading-relaxed">
@@ -451,7 +451,7 @@ export default function LandingPage() {
                   <span className="text-[8px] sm:text-[9px] font-mono font-black uppercase text-[#2D6A4F] dark:text-emerald-400 bg-[#E8F0EC]/80 dark:bg-emerald-950/40 px-2.5 py-1 rounded-md">
                     Emotional Resilience
                   </span>
-                  <span className="text-[8px] sm:text-[9px] font-mono text-slate-400 dark:text-zinc-500 font-bold">PMC10515124</span>
+                  <span className="text-[8px] sm:text-[9px] font-mono text-slate-600 dark:text-zinc-400 font-extrabold text-right sm:text-[10px]">PMC10515124</span>
                 </div>
                 <h4 className="text-base sm:text-lg font-display font-black text-slate-800 dark:text-white uppercase tracking-tight leading-snug">Chatbot CBT Efficacy</h4>
                 <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium leading-relaxed">
@@ -502,7 +502,7 @@ export default function LandingPage() {
                   <span className="text-[8px] sm:text-[9px] font-mono font-black uppercase bg-[#E8F0EC]/80 dark:bg-emerald-950/40 text-[#2D6A4F] dark:text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/10 truncate">
                     Voice Bio-metrics
                   </span>
-                  <span className="text-[8px] sm:text-[9px] font-mono text-slate-400 dark:text-zinc-500 shrink-0">2019 • JMIR Literature</span>
+                  <span className="text-[8px] sm:text-[9px] font-mono text-slate-600 dark:text-zinc-400 font-extrabold p-1 rounded sm:text-[10px] shrink-0">2019 • JMIR Literature</span>
                 </div>
                 
                 <h3 className="text-xl sm:text-2xl font-display font-black text-slate-800 dark:text-white uppercase tracking-tight leading-snug">
@@ -515,12 +515,12 @@ export default function LandingPage() {
 
                 <div className="pt-4 border-t border-slate-100 dark:border-zinc-800/60 space-y-2">
                   <div className="flex justify-between text-[8px] sm:text-[9px] font-mono">
-                    <span className="text-slate-400">PubMed Citation:</span>
-                    <span className="font-bold text-slate-600 dark:text-zinc-300">PMC6480749</span>
+                    <span className="text-slate-600 dark:text-zinc-450 font-bold">PubMed Citation:</span>
+                    <span className="font-extrabold text-slate-700 dark:text-zinc-200">PMC6480749</span>
                   </div>
                   <div className="flex justify-between text-[8px] sm:text-[9px] font-mono">
-                    <span className="text-slate-400">Adaptation:</span>
-                    <span className="font-bold text-[#2D6A4F] dark:text-emerald-400 text-right truncate pl-2">Neural Sentiment Vectorizer</span>
+                    <span className="text-slate-600 dark:text-zinc-450 font-bold">Adaptation:</span>
+                    <span className="font-extrabold text-[#2D6A4F] dark:text-emerald-450 text-right truncate pl-2">Neural Sentiment Vectorizer</span>
                   </div>
                 </div>
               </div>
@@ -545,7 +545,7 @@ export default function LandingPage() {
                   <span className="text-[8px] sm:text-[9px] font-mono font-black uppercase bg-[#E8F0EC]/80 dark:bg-emerald-950/40 text-[#2D6A4F] dark:text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/10 truncate">
                     Adaptive UI / UX
                   </span>
-                  <span className="text-[8px] sm:text-[9px] font-mono text-slate-400 dark:text-zinc-500 shrink-0">2021 • Frontiers</span>
+                  <span className="text-[8px] sm:text-[9px] font-mono text-slate-600 dark:text-zinc-400 font-extrabold p-1 rounded sm:text-[10px] shrink-0">2021 • Frontiers</span>
                 </div>
                 
                 <h3 className="text-xl sm:text-2xl font-display font-black text-slate-800 dark:text-white uppercase tracking-tight leading-snug">
@@ -558,12 +558,12 @@ export default function LandingPage() {
 
                 <div className="pt-4 border-t border-slate-100 dark:border-zinc-800/60 space-y-2">
                   <div className="flex justify-between text-[8px] sm:text-[9px] font-mono">
-                    <span className="text-slate-400">PubMed Citation:</span>
-                    <span className="font-bold text-slate-600 dark:text-zinc-300">PMC8340156</span>
+                    <span className="text-slate-600 dark:text-zinc-450 font-bold">PubMed Citation:</span>
+                    <span className="font-extrabold text-slate-700 dark:text-zinc-200">PMC8340156</span>
                   </div>
                   <div className="flex justify-between text-[8px] sm:text-[9px] font-mono">
-                    <span className="text-slate-400">Adaptation:</span>
-                    <span className="font-bold text-[#2D6A4F] dark:text-emerald-400 text-right truncate pl-2">Atmosphere Adaptive Shell</span>
+                    <span className="text-slate-600 dark:text-zinc-450 font-bold">Adaptation:</span>
+                    <span className="font-extrabold text-[#2D6A4F] dark:text-emerald-450 text-right truncate pl-2">Atmosphere Adaptive Shell</span>
                   </div>
                 </div>
               </div>
@@ -588,7 +588,7 @@ export default function LandingPage() {
                   <span className="text-[8px] sm:text-[9px] font-mono font-black uppercase bg-[#E8F0EC]/80 dark:bg-emerald-950/40 text-[#2D6A4F] dark:text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/10 truncate">
                     Clinical Sovereignty
                   </span>
-                  <span className="text-[8px] sm:text-[9px] font-mono text-slate-400 dark:text-zinc-500 shrink-0">2022 • Sensors Journal</span>
+                  <span className="text-[8px] sm:text-[9px] font-mono text-slate-600 dark:text-zinc-400 font-extrabold p-1 rounded sm:text-[10px] shrink-0">2022 • Sensors Journal</span>
                 </div>
                 
                 <h3 className="text-xl sm:text-2xl font-display font-black text-slate-800 dark:text-white uppercase tracking-tight leading-snug">
@@ -601,12 +601,12 @@ export default function LandingPage() {
 
                 <div className="pt-4 border-t border-slate-100 dark:border-zinc-800/60 space-y-2">
                   <div className="flex justify-between text-[8px] sm:text-[9px] font-mono">
-                    <span className="text-slate-400">PubMed Citation:</span>
-                    <span className="font-bold text-slate-600 dark:text-zinc-300">PMC9139194</span>
+                    <span className="text-slate-600 dark:text-zinc-450 font-bold">PubMed Citation:</span>
+                    <span className="font-extrabold text-slate-700 dark:text-zinc-200">PMC9139194</span>
                   </div>
                   <div className="flex justify-between text-[8px] sm:text-[9px] font-mono">
-                    <span className="text-slate-400">Adaptation:</span>
-                    <span className="font-bold text-[#2D6A4F] dark:text-emerald-400 text-right truncate pl-2">Sovereign Identity Framework</span>
+                    <span className="text-slate-600 dark:text-zinc-450 font-bold">Adaptation:</span>
+                    <span className="font-extrabold text-[#2D6A4F] dark:text-emerald-450 text-right truncate pl-2">Sovereign Identity Framework</span>
                   </div>
                 </div>
               </div>
@@ -654,42 +654,42 @@ export default function LandingPage() {
           <div className="md:col-span-1 space-y-6 sm:space-y-10">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-airra-text dark:bg-white flex items-center justify-center text-airra-bg dark:text-zinc-950 font-black italic">A</div>
-              <span className="text-2xl font-display font-black uppercase tracking-tighter">Airra</span>
+              <span className="text-2xl font-display font-black uppercase tracking-tighter text-zinc-900 dark:text-white">Airra</span>
             </div>
-            <p className="text-sm text-airra-muted dark:text-airra-dark-muted font-medium leading-relaxed">
+            <p className="text-sm text-zinc-800 dark:text-zinc-300 font-medium leading-relaxed">
               Handcrafting cognitive sanctuaries through deep-neural intelligence.
             </p>
             <div className="flex gap-4 sm:gap-6">
-              <Link to="#" className="w-12 h-12 rounded-xl bg-airra-bg dark:bg-zinc-900 flex items-center justify-center text-airra-muted hover:text-airra-text dark:hover:text-white transition-all"><Star size={20} /></Link>
-              <Link to="#" className="w-12 h-12 rounded-xl bg-airra-bg dark:bg-zinc-900 flex items-center justify-center text-airra-muted hover:text-airra-text dark:hover:text-white transition-all"><Compass size={20} /></Link>
-              <Link to="#" className="w-12 h-12 rounded-xl bg-airra-bg dark:bg-zinc-900 flex items-center justify-center text-airra-muted hover:text-airra-text dark:hover:text-white transition-all"><Activity size={20} /></Link>
+              <Link to="#" className="w-12 h-12 rounded-xl bg-airra-bg dark:bg-zinc-900 flex items-center justify-center text-zinc-805 hover:text-airra-text dark:text-zinc-400 dark:hover:text-white transition-all"><Star size={20} /></Link>
+              <Link to="#" className="w-12 h-12 rounded-xl bg-airra-bg dark:bg-zinc-900 flex items-center justify-center text-zinc-805 hover:text-airra-text dark:text-zinc-400 dark:hover:text-white transition-all"><Compass size={20} /></Link>
+              <Link to="#" className="w-12 h-12 rounded-xl bg-airra-bg dark:bg-zinc-900 flex items-center justify-center text-zinc-805 hover:text-airra-text dark:text-zinc-400 dark:hover:text-white transition-all"><Activity size={20} /></Link>
             </div>
           </div>
 
           <div className="space-y-6 sm:space-y-10">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-airra-muted">Architecture</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-900 dark:text-zinc-400">Architecture</p>
             <nav className="flex flex-col gap-4 sm:gap-6">
-               <Link to="#" className="text-xs sm:text-sm font-black uppercase tracking-widest hover:text-airra-primary transition-all">Neuroscience</Link>
-               <Link to="#" className="text-xs sm:text-sm font-black uppercase tracking-widest hover:text-airra-primary transition-all">The AI Model</Link>
-               <Link to="#" className="text-xs sm:text-sm font-black uppercase tracking-widest hover:text-airra-primary transition-all">Sovereignty</Link>
-               <Link to="#" className="text-xs sm:text-sm font-black uppercase tracking-widest hover:text-airra-primary transition-all">Handcrafting</Link>
+               <Link to="#" className="text-xs sm:text-sm font-black uppercase tracking-widest text-zinc-800 hover:text-airra-primary dark:text-zinc-300 dark:hover:text-emerald-400 transition-all">Neuroscience</Link>
+               <Link to="#" className="text-xs sm:text-sm font-black uppercase tracking-widest text-zinc-800 hover:text-airra-primary dark:text-zinc-300 dark:hover:text-emerald-400 transition-all">The AI Model</Link>
+               <Link to="#" className="text-xs sm:text-sm font-black uppercase tracking-widest text-zinc-800 hover:text-airra-primary dark:text-zinc-300 dark:hover:text-emerald-400 transition-all">Sovereignty</Link>
+               <Link to="#" className="text-xs sm:text-sm font-black uppercase tracking-widest text-zinc-800 hover:text-airra-primary dark:text-zinc-300 dark:hover:text-emerald-400 transition-all">Handcrafting</Link>
             </nav>
           </div>
 
           <div className="space-y-6 sm:space-y-10">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-airra-muted">Sectors</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-900 dark:text-zinc-400">Sectors</p>
             <nav className="flex flex-col gap-4 sm:gap-6">
-               <Link to="/consultation" className="text-xs sm:text-sm font-black uppercase tracking-widest hover:text-airra-primary transition-all">Therapy Sync</Link>
-               <Link to="/journals" className="text-xs sm:text-sm font-black uppercase tracking-widest hover:text-airra-primary transition-all">The Journal</Link>
-               <Link to="/analytics" className="text-xs sm:text-sm font-black uppercase tracking-widest hover:text-airra-primary transition-all">Analytics Hub</Link>
-               <Link to="/community" className="text-xs sm:text-sm font-black uppercase tracking-widest hover:text-airra-primary transition-all">Collective</Link>
+               <Link to="/consultation" className="text-xs sm:text-sm font-black uppercase tracking-widest text-zinc-800 hover:text-airra-primary dark:text-zinc-300 dark:hover:text-emerald-400 transition-all">Therapy Sync</Link>
+               <Link to="/journals" className="text-xs sm:text-sm font-black uppercase tracking-widest text-zinc-800 hover:text-airra-primary dark:text-zinc-300 dark:hover:text-emerald-400 transition-all">The Journal</Link>
+               <Link to="/analytics" className="text-xs sm:text-sm font-black uppercase tracking-widest text-zinc-800 hover:text-airra-primary dark:text-zinc-300 dark:hover:text-emerald-400 transition-all">Analytics Hub</Link>
+               <Link to="/community" className="text-xs sm:text-sm font-black uppercase tracking-widest text-zinc-800 hover:text-airra-primary dark:text-zinc-300 dark:hover:text-emerald-400 transition-all">Collective</Link>
             </nav>
           </div>
 
           <div className="space-y-6 sm:space-y-10">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-airra-muted">Synthesis</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-900 dark:text-zinc-400">Synthesis</p>
             <div className="p-6 sm:p-8 airra-bg dark:bg-zinc-900 rounded-[2rem] border border-airra-border dark:border-white/5 space-y-4 sm:space-y-6">
-               <p className="text-xs font-medium text-airra-muted leading-relaxed">Subscribe to our weekly philosophical meditation on technology and wellness.</p>
+               <p className="text-xs font-medium text-zinc-800 dark:text-zinc-400 leading-relaxed">Subscribe to our weekly philosophical meditation on technology and wellness.</p>
                <div className="relative">
                   <input 
                     type="email" 
@@ -704,11 +704,11 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto pt-16 sm:pt-40 flex flex-col md:flex-row items-center justify-between border-t border-airra-border/20 dark:border-white/5 gap-6 sm:gap-8 text-center md:text-left">
-           <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] text-airra-muted/40">© 2026 AIRRA NEURAL SYSTEMS. ALL EQUITY RESERVED.</p>
+           <p className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-[0.3em] text-zinc-800 dark:text-zinc-300">© 2026 AIRRA NEURAL SYSTEMS. ALL EQUITY RESERVED.</p>
            <div className="flex flex-wrap justify-center gap-6 sm:gap-10">
-              <Link to="#" className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-airra-muted/40 hover:text-airra-text transition-all">Security Protocol</Link>
-              <Link to="#" className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-airra-muted/40 hover:text-airra-text transition-all">Ethical AI</Link>
-              <Link to="#" className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-airra-muted/40 hover:text-airra-text transition-all">Privacy Sanctuary</Link>
+              <Link to="#" className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest text-zinc-800 dark:text-zinc-300 hover:text-airra-primary dark:hover:text-emerald-450 transition-all">Security Protocol</Link>
+              <Link to="#" className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest text-zinc-800 dark:text-zinc-300 hover:text-airra-primary dark:hover:text-emerald-450 transition-all">Ethical AI</Link>
+              <Link to="#" className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest text-zinc-800 dark:text-zinc-300 hover:text-airra-primary dark:hover:text-emerald-450 transition-all">Privacy Sanctuary</Link>
            </div>
         </div>
       </footer>

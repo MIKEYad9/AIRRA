@@ -47,6 +47,12 @@ Core Communication Directives:
 `;
 
 // API Endpoints
+// Google Site Verification Endpoint
+app.get("/googlec7cf5385d8922ada.html", (req, res) => {
+  res.setHeader("Content-Type", "text/html");
+  res.send("google-site-verification: googlec7cf5385d8922ada.html");
+});
+
 // Health Probe
 app.get("/api/health", (req, res) => {
   res.json({ status: "healthy", timestamp: new Date().toISOString() });

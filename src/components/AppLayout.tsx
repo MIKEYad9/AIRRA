@@ -2,17 +2,6 @@ import React from "react";
 import Sidebar from "./Sidebar";
 import { motion, AnimatePresence } from "motion/react";
 
-export const metadata = {
-  title: 'AIRRA Sanctuary | AI-Powered Digital Wellbeing Platform',
-
-  description:
-    'AIRRA Sanctuary is an immersive AI-powered platform focused on intelligent interaction, emotional awareness, digital wellbeing, and futuristic user experience.',
-
-  verification: {
-    google: 'hQa-1xYjU4CpC4vgRd7XUTaDmZwu0EoIBU-npPl8RdA',
-  },
-}
-
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-airra-bg dark:bg-airra-dark-bg selection:bg-airra-primary/10">

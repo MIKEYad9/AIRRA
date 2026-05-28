@@ -79,13 +79,13 @@ export default function Sidebar() {
         <div className="flex flex-col gap-4 pt-4 border-t border-airra-border/20 dark:border-white/5 flex-shrink-0 mt-auto w-full items-center">
           <button 
             onClick={toggleTheme}
-            className="w-11 h-11 flex items-center justify-center rounded-2xl text-airra-muted hover:text-airra-text dark:hover:text-white transition-all active:scale-90"
+            className="w-11 h-11 flex items-center justify-center rounded-2xl text-zinc-800 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-all active:scale-90"
           >
             {isDark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
           <button 
             onClick={() => signOut()}
-            className="w-11 h-11 flex items-center justify-center rounded-2xl text-airra-muted hover:text-rose-500 transition-all active:scale-90"
+            className="w-11 h-11 flex items-center justify-center rounded-2xl text-zinc-800 dark:text-zinc-400 hover:text-rose-500 transition-all active:scale-90"
           >
             <LogOut size={16} />
           </button>
@@ -100,7 +100,7 @@ export default function Sidebar() {
             <Link 
               key={item.to} 
               to={item.to} 
-              className={`flex-1 flex flex-col items-center gap-1 transition-all duration-300 ${isActive ? 'text-emerald-500 dark:text-emerald-400 font-extrabold' : 'text-airra-muted/80'}`}
+              className={`flex-1 flex flex-col items-center gap-1 transition-all duration-300 ${isActive ? 'text-emerald-500 dark:text-emerald-400 font-extrabold' : 'text-zinc-800 dark:text-zinc-400'}`}
             >
               <div className={`p-2 rounded-xl transition-all ${isActive ? 'bg-emerald-500/10 dark:bg-emerald-400/10 scale-[1.08] shadow-inner border border-emerald-400/20' : ''}`}>
                 {React.cloneElement(item.icon as React.ReactElement, { size: 18 })}
@@ -122,7 +122,7 @@ function SidebarItem({ to, icon, label, active }: { to: string, icon: React.Reac
       <div className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-500 ${
         active 
           ? 'bg-airra-text dark:bg-white text-airra-bg dark:text-zinc-950 shadow-airra-lg scale-110' 
-          : 'text-airra-muted hover:text-airra-text dark:hover:text-white hover:bg-white dark:hover:bg-zinc-800'
+          : 'text-zinc-800 dark:text-zinc-400 hover:text-airra-text dark:hover:text-white hover:bg-white dark:hover:bg-zinc-800'
       }`}>
         {React.cloneElement(icon as React.ReactElement, { size: 20 })}
       </div>
