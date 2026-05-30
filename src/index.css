@@ -28,14 +28,17 @@ img, video {
   padding-top: var(--top-padding);
 }
 
-.page-container {
-  padding-left: var(--side-padding) !important;
-  padding-right: var(--side-padding) !important;
-}
+/* Mobile-first layout optimizations: eliminate double nested page alignment margins on mobile */
+@media (min-width: 640px) {
+  .page-container {
+    padding-left: var(--side-padding) !important;
+    padding-right: var(--side-padding) !important;
+  }
 
-.page-container > *, .page-container section {
-  padding-left: var(--side-padding);
-  padding-right: var(--side-padding);
+  .page-container > *, .page-container section {
+    padding-left: var(--side-padding);
+    padding-right: var(--side-padding);
+  }
 }
 
 /* Ensure no negative margins pull content left of screen edge */

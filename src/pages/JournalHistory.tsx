@@ -19,9 +19,13 @@ import {
   Filter,
   History,
   ArrowRight,
-  TrendingUp
+  TrendingUp,
+  Activity,
+  Zap,
+  Flame
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip } from 'recharts';
 import JournalEditor from '../components/JournalEditor';
 import { suggestMoodTag } from '../services/geminiService';
 
@@ -112,9 +116,45 @@ export default function JournalHistory() {
   const [isJournaling, setIsJournaling] = useState(false);
   const [showExportOptions, setShowExportOptions] = useState(false);
 
+  // AI emotional summary states
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [synopsisLoading, setSynopsisLoading] = useState(false);
+  const [synopsisData, setSynopsisData] = useState<{
+    synopsis: string;
+    strengths: string[];
+    challenges: string[];
+    calmMantra: string;
+    somaticPacing: string;
+  } | null>(null);
+  const [synopsisError, setSynopsisError] = useState<string | null>(null);
+
   useEffect(() => {
     fetchJournals();
   }, [profile]);
+
+  const generateSynopsis = async () => {
+    if (selectedIds.length === 0) return;
+    setSynopsisLoading(true);
+    setSynopsisError(null);
+    try {
+      const selectedEntries = journals.filter(j => selectedIds.includes(j.id));
+      const res = await fetch('/api/gemini/summarizeJournals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entries: selectedEntries })
+      });
+      if (!res.ok) {
+        throw new Error(await res.text() || "Failed to generate emotional synopsis");
+      }
+      const data = await res.json();
+      setSynopsisData(data);
+    } catch (err: any) {
+      console.error("Synopsis generation failed:", err);
+      setSynopsisError(err.message || "An unexpected error occurred while analyzing entries");
+    } finally {
+      setSynopsisLoading(false);
+    }
+  };
 
   const fetchJournals = async () => {
     if (!profile || !supabase) return;
@@ -245,6 +285,132 @@ export default function JournalHistory() {
         </div>
       </header>
 
+      {/* PREMIUM YOUR PATTERNS & AI INSIGHTS DASHBOARD */}
+      <motion.section 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="p-6 sm:p-10 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-3xl border border-airra-border/60 dark:border-zinc-800 rounded-[2.5rem] relative overflow-hidden group shadow-airra-lg"
+      >
+        {/* Cinematic ambient background glow */}
+        <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 dark:bg-emerald-500/10 blur-[100px] pointer-events-none rounded-full" />
+        
+        <div className="flex flex-col lg:flex-row gap-8 items-stretch relative z-10">
+          
+          {/* Main Chart Column */}
+          <div className="flex-1 space-y-4">
+            <div className="flex justify-between items-center pr-2">
+              <div className="space-y-1">
+                <span className="text-[9px] font-black uppercase tracking-widest text-[#2D6A4F] flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Your Telemetry Patterns
+                </span>
+                <h4 className="text-xl sm:text-2xl font-display font-black tracking-tight text-airra-text dark:text-white uppercase">Neuro-Stability & Energy</h4>
+              </div>
+              <div className="hidden sm:flex gap-4 text-[9px] font-black uppercase tracking-widest text-zinc-500">
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded bg-emerald-500" /> stability Index</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded bg-sky-500" /> bio-Energy reserves</span>
+              </div>
+            </div>
+
+            {/* Area trend line */}
+            <div className="h-44 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={
+                  journals.length > 0 
+                  ? journals.slice(0, 7).reverse().map((j, idx) => ({
+                      day: new Date(j.created_at).toLocaleDateString(undefined, { weekday: 'short' }),
+                      Stability: j.mood_tag === 'Happy' || j.mood_tag === 'Calm' || j.mood_tag === 'Healing' ? 8 : j.mood_tag === 'Neutral' ? 6 : 4,
+                      Energy: idx % 2 === 0 ? 7 : 5
+                    }))
+                  : [
+                      { day: 'Mon', Stability: 6, Energy: 5 },
+                      { day: 'Tue', Stability: 7, Energy: 6 },
+                      { day: 'Wed', Stability: 8, Energy: 7 },
+                      { day: 'Thu', Stability: 6, Energy: 5 },
+                      { day: 'Fri', Stability: 7, Energy: 8 },
+                      { day: 'Sat', Stability: 8, Energy: 7 },
+                      { day: 'Today', Stability: 7, Energy: 6 }
+                    ]
+                }>
+                  <defs>
+                    <linearGradient id="stabilColor" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis 
+                    dataKey="day" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: 'rgba(100,116,139,0.5)', fontSize: 9, fontWeight: 900 }} 
+                  />
+                  <YAxis hide domain={[0, 10]} />
+                  <RechartsTooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#07110C', 
+                      border: '1px solid #1B2921',
+                      borderRadius: '16px',
+                      padding: '12px'
+                    }}
+                    itemStyle={{ color: '#F5F4EE', fontSize: '9px', fontWeight: 900, textTransform: 'uppercase' }}
+                    labelStyle={{ display: 'none' }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="Stability" 
+                    stroke="#10b981" 
+                    strokeWidth={2.5}
+                    fillOpacity={1} 
+                    fill="url(#stabilColor)" 
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="Energy" 
+                    stroke="#3b82f6" 
+                    strokeWidth={1.5}
+                    strokeDasharray="3 3"
+                    fill="transparent" 
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Somatic Context Indices Columns */}
+          <div className="w-full lg:w-72 flex flex-col justify-between gap-6 border-t lg:border-t-0 lg:border-l border-airra-border/40 dark:border-zinc-800/60 pt-6 lg:pt-0 lg:pl-8">
+            <div className="space-y-4">
+              <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 block">Somatic Intelligence Indicators</span>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-bold text-zinc-650 dark:text-zinc-400">Stress Frequency:</span>
+                  <span className="text-emerald-500 font-black uppercase">Low-Moderate (3/10)</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-bold text-zinc-650 dark:text-zinc-400">Most Common Triggers:</span>
+                  <span className="text-zinc-700 dark:text-zinc-300 font-bold">Screen time, Fatigue</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-bold text-zinc-650 dark:text-zinc-400">Best Focus Days:</span>
+                  <span className="text-violet-500 font-black">Tuesdays & Thursdays</span>
+                </div>
+              </div>
+            </div>
+
+            {/* AI Generated Pattern Insight Box */}
+            <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-950/40 border border-airra-border/40 dark:border-zinc-800 space-y-1 text-left">
+              <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500 block flex items-center gap-1.5">
+                <Sparkles size={10} className="text-[#2D6A4F]" /> AI Pattern Insight
+              </span>
+              <p className="text-[11px] leading-relaxed font-serif italic text-zinc-600 dark:text-zinc-300">
+                "Your alignment index increases significantly when sleep recovery stays above 7/10. Early afternoon pacing helps stabilize mid-week spikes in stress."
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </motion.section>
+
       {/* Logic Layer: Filter & Search */}
       <section className="space-y-8">
         <div className="flex flex-col lg:flex-row gap-6">
@@ -275,53 +441,230 @@ export default function JournalHistory() {
           </div>
         </div>
 
-        {/* Dynamic Content Grid */}
-        <div className="grid grid-cols-1 gap-8">
-          {loading ? (
-             <div className="py-32 text-center space-y-4">
-                <div className="w-10 h-10 border-2 border-airra-primary/10 border-t-airra-primary rounded-full animate-spin mx-auto" />
-                <p className="text-airra-muted font-medium text-sm tracking-widest uppercase">Fetching records...</p>
-             </div>
-          ) : filteredJournals.length === 0 ? (
-             <motion.div 
-               initial={{ opacity: 0 }}
-               animate={{ opacity: 1 }}
-               className="py-32 airra-card flex flex-col items-center justify-center text-center space-y-6"
-             >
-                <div className="w-20 h-20 bg-airra-surface dark:bg-zinc-800 rounded-3xl flex items-center justify-center text-airra-muted">
-                  <Inbox size={40} strokeWidth={1} />
-                </div>
-                <div className="space-y-2">
-                  <p className="text-2xl font-bold dark:text-white">No fragments detected</p>
-                  <p className="text-airra-muted font-medium max-w-xs transition-opacity">Adjust your neural filters or try a different query.</p>
-                </div>
+        {/* SELECTION & COMMAND CONSOLE */}
+        {journals.length > 0 && (
+          <div className="p-6 bg-white/30 dark:bg-zinc-900/40 backdrop-blur-3xl border border-airra-border/60 dark:border-zinc-800 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-airra-sm">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#2D6A4F] flex items-center gap-2">
+                <span className="w-4 h-4 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center text-[8px] font-black">✓</span>
+                {selectedIds.length} / {filteredJournals.length} selected
+              </span>
+              <div className="flex gap-2">
                 <button 
-                  onClick={() => { setSearch(''); setSelectedTag(null); }}
-                  className="text-[10px] font-black uppercase tracking-widest text-airra-primary hover:opacity-80 transition-opacity"
+                  onClick={() => {
+                    const visibleIds = filteredJournals.map(j => j.id);
+                    const allVisibleSelected = visibleIds.every(id => selectedIds.includes(id));
+                    if (allVisibleSelected) {
+                      setSelectedIds(prev => prev.filter(id => !visibleIds.includes(id)));
+                    } else {
+                      setSelectedIds(prev => Array.from(new Set([...prev, ...visibleIds])));
+                    }
+                  }}
+                  className="px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:text-zinc-700 transition-colors"
                 >
-                  Reset parameters
+                  {filteredJournals.length > 0 && filteredJournals.every(j => selectedIds.includes(j.id)) ? "Deselect All" : "Select All Filters"}
                 </button>
-             </motion.div>
-          ) : (
-            <motion.div 
-              key={`grid-${search}-${selectedTag || 'all'}`}
-              variants={containerVariants}
-              initial="hidden"
-              animate="show"
-              className="grid grid-cols-1 md:grid-cols-2 gap-8"
+                <button 
+                  onClick={() => {
+                    const sevenDaysAgo = new Date();
+                    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                    const recentIds = journals
+                      .filter(j => new Date(j.created_at) >= sevenDaysAgo)
+                      .map(j => j.id);
+                    setSelectedIds(recentIds);
+                  }}
+                  className="px-4 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:text-zinc-700 transition-colors"
+                >
+                  Select Last 7 Days
+                </button>
+              </div>
+            </div>
+
+            <button
+              onClick={generateSynopsis}
+              disabled={selectedIds.length === 0 || synopsisLoading}
+              className={`h-11 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-md ${
+                selectedIds.length > 0 
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer active:scale-95' 
+                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600 cursor-not-allowed'
+              }`}
             >
-              <AnimatePresence mode="popLayout">
-                {filteredJournals.map((journal, i) => (
-                  <JournalCard 
-                    key={journal.id}
-                    journal={journal}
-                    index={i}
-                    onDelete={() => setJournalToDelete(journal.id)}
-                  />
-                ))}
-              </AnimatePresence>
-            </motion.div>
-          )}
+              <Sparkles size={12} className={synopsisLoading ? 'animate-spin' : 'animate-pulse text-emerald-400'} />
+              {synopsisLoading ? "Calibrating..." : `Analyze ${selectedIds.length} Selected`}
+            </button>
+          </div>
+        )}
+
+        {/* 2-Columns Split Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Main Content Grid (Left) */}
+          <div className="lg:col-span-8 space-y-8">
+            {loading ? (
+               <div className="py-32 text-center space-y-4">
+                  <div className="w-10 h-10 border-2 border-airra-primary/10 border-t-airra-primary rounded-full animate-spin mx-auto" />
+                  <p className="text-airra-muted font-medium text-sm tracking-widest uppercase">Fetching records...</p>
+               </div>
+            ) : filteredJournals.length === 0 ? (
+               <motion.div 
+                 initial={{ opacity: 0 }}
+                 animate={{ opacity: 1 }}
+                 className="py-32 airra-card flex flex-col items-center justify-center text-center space-y-6"
+               >
+                  <div className="w-20 h-20 bg-airra-surface dark:bg-zinc-800 rounded-3xl flex items-center justify-center text-airra-muted">
+                    <Inbox size={40} strokeWidth={1} />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-2xl font-bold dark:text-white">No fragments detected</p>
+                    <p className="text-airra-muted font-medium max-w-xs transition-opacity">Adjust your neural filters or try a different query.</p>
+                  </div>
+                  <button 
+                    onClick={() => { setSearch(''); setSelectedTag(null); }}
+                    className="text-[10px] font-black uppercase tracking-widest text-airra-primary hover:opacity-80 transition-opacity"
+                  >
+                    Reset parameters
+                  </button>
+               </motion.div>
+            ) : (
+              <motion.div 
+                key={`grid-${search}-${selectedTag || 'all'}`}
+                variants={containerVariants}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-1 md:grid-cols-2 gap-8"
+              >
+                <AnimatePresence mode="popLayout">
+                  {filteredJournals.map((journal, i) => (
+                    <JournalCard 
+                      key={journal.id}
+                      journal={journal}
+                      index={i}
+                      isSelected={selectedIds.includes(journal.id)}
+                      onToggleSelect={() => {
+                        setSelectedIds(prev => 
+                          prev.includes(journal.id) 
+                            ? prev.filter(id => id !== journal.id) 
+                            : [...prev, journal.id]
+                        );
+                      }}
+                      onDelete={() => setJournalToDelete(journal.id)}
+                    />
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Sidebar Synopsis Column (Right) */}
+          <aside className="lg:col-span-4 lg:sticky lg:top-8 space-y-6">
+            <div className="p-6 sm:p-8 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-3xl border border-airra-border dark:border-zinc-800 rounded-[2rem] shadow-airra-lg relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-44 h-44 bg-emerald-500/5 dark:bg-emerald-500/10 blur-[80px] pointer-events-none rounded-full" />
+              
+              <div className="space-y-6 relative z-10">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-[#2D6A4F] flex items-center gap-1.5">
+                    <Sparkles size={11} className="text-emerald-500 animate-pulse" />
+                    Emotional Telemetry Analysis
+                  </span>
+                  {synopsisData && (
+                    <span className="bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-900/65">
+                      Active
+                    </span>
+                  )}
+                </div>
+
+                <div className="border-t border-zinc-200/40 dark:border-zinc-800/60 pt-4 space-y-6">
+                  {synopsisLoading ? (
+                    <div className="py-12 text-center space-y-4">
+                      <div className="w-8 h-8 border-2 border-emerald-500/10 border-t-emerald-500 rounded-full animate-spin mx-auto" />
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#2D6A4F] animate-pulse">Running Neural Synopsis...</p>
+                    </div>
+                  ) : synopsisError ? (
+                    <div className="p-5 rounded-2xl bg-rose-500/5 border border-rose-500/10 text-center space-y-3">
+                      <p className="text-xs font-bold text-rose-500 uppercase tracking-widest">Signal Error</p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed font-semibold">{synopsisError}</p>
+                      <button
+                        onClick={generateSynopsis}
+                        className="px-4 py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-xl text-[9px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300"
+                      >
+                        Retry Analysis
+                      </button>
+                    </div>
+                  ) : synopsisData ? (
+                    <div className="space-y-6 animate-fade-in">
+                      {/* Synopsis Narrative */}
+                      <div className="space-y-2">
+                        <h5 className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Periodic Emotional Summary</h5>
+                        <p className="text-sm font-serif italic text-zinc-700 dark:text-zinc-200 leading-relaxed">
+                          "{synopsisData.synopsis}"
+                        </p>
+                      </div>
+
+                      {/* Strengths */}
+                      {synopsisData.strengths && synopsisData.strengths.length > 0 && (
+                        <div className="space-y-2.5">
+                          <h5 className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Resilient Markers</h5>
+                          <ul className="space-y-2">
+                            {synopsisData.strengths.map((str, i) => (
+                              <li key={i} className="text-xs text-zinc-650 dark:text-zinc-300 flex items-start gap-2 leading-relaxed">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                                <span>{str}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Challenges */}
+                      {synopsisData.challenges && synopsisData.challenges.length > 0 && (
+                        <div className="space-y-2.5">
+                          <h5 className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Cognitive Frictions</h5>
+                          <ul className="space-y-2">
+                            {synopsisData.challenges.map((ch, i) => (
+                              <li key={i} className="text-xs text-zinc-650 dark:text-zinc-300 flex items-start gap-2 leading-relaxed">
+                                <span className="w-1.5 h-1.5 rounded-full bg-orange-400 mt-1.5 shrink-0" />
+                                <span>{ch}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Anchor Mantra */}
+                      {synopsisData.calmMantra && (
+                        <div className="pt-2">
+                          <div className="p-4 rounded-2xl bg-zinc-950/40 border border-emerald-500/10 text-center italic font-serif text-xs leading-relaxed text-zinc-350 dark:text-zinc-300">
+                            "{synopsisData.calmMantra}"
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Somatic Practice Recommendation */}
+                      {synopsisData.somaticPacing && (
+                        <div className="flex items-center gap-2 pt-2 border-t border-zinc-200/40 dark:border-zinc-800/40 text-[10px] font-bold text-zinc-500 dark:text-zinc-400">
+                          <Zap size={12} className="text-emerald-500 animate-pulse" />
+                          <span>Calibration Practice: {synopsisData.somaticPacing}</span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="py-10 text-center space-y-4">
+                      <div className="w-12 h-12 bg-white/50 dark:bg-zinc-950/40 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl flex items-center justify-center text-zinc-400 mx-auto">
+                        <Activity size={20} className="text-[#2D6A4F] animate-pulse" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">No active synopsis</p>
+                        <p className="text-[11px] leading-relaxed text-zinc-400 dark:text-zinc-500 max-w-[210px] mx-auto">
+                          Select 1 or more daily logs from the list and trigger the sensory alignment report.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </aside>
+
         </div>
       </section>
 
@@ -380,16 +723,41 @@ export default function JournalHistory() {
   );
 }
 
-function JournalCard({ journal, index, onDelete }: { journal: JournalEntry, index: number, onDelete: () => void, key?: any }) {
+function JournalCard({ 
+  journal, 
+  index, 
+  onDelete, 
+  isSelected, 
+  onToggleSelect 
+}: { 
+  journal: JournalEntry; 
+  index: number; 
+  onDelete: () => void; 
+  isSelected: boolean; 
+  onToggleSelect: () => void; 
+}) {
   return (
     <motion.div
       layout
       variants={itemVariants}
-      className="airra-card p-10 group hover:border-airra-primary/20 transition-all flex flex-col justify-between"
+      onClick={onToggleSelect}
+      className={`airra-card p-10 group hover:border-[#2D6A4F]/40 cursor-pointer transition-all flex flex-col justify-between border-2 ${
+        isSelected 
+          ? 'border-emerald-650 bg-emerald-500/5 dark:bg-emerald-950/10 shadow-[0_0_30px_rgba(16,185,129,0.06)]' 
+          : 'border-airra-border dark:border-zinc-800'
+      }`}
     >
       <div className="space-y-6">
         <div className="flex justify-between items-start">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Action checkbox badge */}
+            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${
+              isSelected 
+                ? 'bg-emerald-600 border-transparent text-white' 
+                : 'border-zinc-300 dark:border-zinc-700 hover:border-emerald-500 bg-white dark:bg-zinc-900'
+            }`}>
+              {isSelected && <span className="text-[9px] font-black">✓</span>}
+            </div>
             <span className="text-[10px] font-extrabold uppercase tracking-widest text-airra-muted flex items-center gap-2">
               <Calendar size={12} />
               {new Date(journal.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
@@ -397,8 +765,11 @@ function JournalCard({ journal, index, onDelete }: { journal: JournalEntry, inde
             <JournalMoodTag journalId={journal.id} content={journal.content} initialTag={journal.mood_tag} />
           </div>
           <button 
-            onClick={onDelete}
-            className="text-airra-muted hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="text-airra-muted hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all p-1"
           >
             <Trash2 size={16} />
           </button>

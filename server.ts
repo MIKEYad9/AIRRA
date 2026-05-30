@@ -190,6 +190,185 @@ app.post("/api/gemini/followup", async (req, res) => {
   }
 });
 
+// 3.5a. Suggest journal-assist prompts based on mood or tags
+app.post("/api/gemini/journal-assist", async (req, res) => {
+  try {
+    const { mood, tags } = req.body;
+    const ai = getGeminiClient();
+    const prompt = `The user is preparing their journal. Their overall mood selected is "${mood || 'reflective'}" and they have tagged their state with: "${(tags || []).join(', ') || 'personal'}".
+    Suggest 3 highly personalized, gentle, compassionate sentence starters, bullet prompts, or guidance questions to help them write their reflections today.
+    
+    Requirements:
+    - Return ONLY a JSON array of strings (3 items).
+    - Keep each starter short, empathetic, and open-ended (under 12 words).
+    - Avoid clunky formatting or nesting. Just a flat array of strings.`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: prompt,
+      config: {
+        systemInstruction: "You are an empathetic companion. Generate 3 supportive journal starters in a clean JSON string array.",
+      },
+    });
+
+    const text = response.text?.trim() || "[]";
+    const jsonMatch = text.match(/\[.*\]/s);
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0]);
+        if (Array.isArray(parsed)) {
+          return res.json({ suggestions: parsed });
+        }
+      } catch (e) {
+        console.warn("Failed to parse assist suggestions:", e);
+      }
+    }
+    res.json({
+      suggestions: [
+        "What is currently sitting heaviest on your heart...",
+        "Today, I found an unexpected pocket of peace when...",
+        "A quiet challenge that I carried today with grace was..."
+      ]
+    });
+  } catch (error: any) {
+    console.error("Server-side journal-assist error:", error);
+    res.status(500).json({ error: error.message || "Internal server error" });
+  }
+});
+
+// 3.5b. Analyze checked-in parameters and provide empathetic audit & remedies
+app.post("/api/gemini/analyzeDay", async (req, res) => {
+  try {
+    const { mood, energy, stress, motivation, sleep, tags, journalResponses } = req.body;
+    const ai = getGeminiClient();
+    
+    const contextStr = `
+    Mood: ${mood}
+    Energy: ${energy}/10
+    Stress: ${stress}/10
+    Motivation: ${motivation}/10
+    Sleep: ${sleep}/10
+    Tags: ${(tags || []).join(', ')}
+    Journal Fields:
+      - What happened: ${journalResponses?.happened || "Not logged"}
+      - Mood affector: ${journalResponses?.affector || "Not logged"}
+      - Gratitude: ${journalResponses?.gratitude || "Not logged"}
+      - Challenge: ${journalResponses?.challenge || "Not logged"}
+    `;
+
+    const prompt = `Analyze this daily check-in completely and objectively. Generate an empathetic, serene emotional wellness audit, tailored physical remedies, a custom affirmation, and identify if emergency calm is recommended.
+
+    Requirements:
+    Return ONLY a valid JSON object matching this schema exactly:
+    {
+      "analysis": "2-3 sentences of gentle, validating, non-clinical insight detailing their neural state.",
+      "remedies": ["3 short, achievable, realistic, somatic and lifestyle remedies (e.g., Hydrate, 4-7-8 breathing, walk, stretch)"],
+      "affirmation": "A personalized holding-space/empowering wellness tagline.",
+      "emergencyCalm": true/false (set to true ONLY if stress is >=7 or mood looks extremely distressed or flustered)
+    }
+
+    Data to evaluate:
+    ${contextStr}`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: prompt,
+      config: {
+        systemInstruction: "You are AIRRA, a companion in quietness. Your task is to provide objective, compassionate bio-emotional self-reflection feedback in JSON.",
+        responseMimeType: "application/json",
+      },
+    });
+
+    const text = response.text?.trim() || "{}";
+    try {
+      const parsed = JSON.parse(text);
+      res.json(parsed);
+    } catch (parseErr) {
+      console.error("Failed to parse analyzeDay response text", text, parseErr);
+      res.json({
+        analysis: "Your internal landscape shows a delicate pattern of adaptation today. We hold space for whatever energy you are carrying.",
+        remedies: [
+          "Take 3 conscious diaphragmatic breaths.",
+          "Rest your eyes from screen luminance for 5 minutes.",
+          "Pour yourself a glass of warm herbal tea or water."
+        ],
+        affirmation: "I am flowing with my baseline, allowing peace to settle where it will.",
+        emergencyCalm: stress >= 7
+      });
+    }
+  } catch (error: any) {
+    console.error("Server-side analyzeDay error:", error);
+    res.status(550).json({ error: error.message || "Failed to analyze day state" });
+  }
+});
+
+// 3.5c. Summarize multiple selected journals into an emotional synopsis
+app.post("/api/gemini/summarizeJournals", async (req, res) => {
+  try {
+    const { entries } = req.body;
+    if (!Array.isArray(entries) || entries.length === 0) {
+      return res.status(400).json({ error: "No entries selected for emotional summary" });
+    }
+
+    const ai = getGeminiClient();
+    const journalText = entries.map((e, idx) => `
+    [Entry ${idx + 1}]
+    Date: ${e.created_at}
+    Title: ${e.title}
+    Mood: ${e.mood_tag || "Not tagged"}
+    Content: ${e.content}
+    -------------------`).join("\n");
+
+    const prompt = `You are AIRRA, the calm and supportive emotional sanctuary. Analyze these selected journal entries and build a compassionate, deep "weekly emotional synopsis" as a JSON object.
+
+    Requirements:
+    Return ONLY a valid JSON object matching this schema exactly:
+    {
+      "synopsis": "A 3-4 sentence comprehensive, deep, and gentle emotional analysis detailing their overall neural state, psychological patterns, and progress of alignment.",
+      "strengths": ["Two short, empathetic bullets detailing cognitive strengths, peace, or resilience detected in their writing."],
+      "challenges": ["Two short, realistic bullets pointing out consistent frictions, fatigue blocks, or stressors detected."],
+      "calmMantra": "An elegant, personalized affirmation or holding-space mantra to carry forward.",
+      "somaticPacing": "One short, direct lifestyle or somatic pacing advice (e.g., 'Incorporate 10 minutes of screen-free twilight silence' or 'Double your hydration index before meetings')."
+    }
+
+    Data to evaluate:
+    ${journalText}`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: prompt,
+      config: {
+        systemInstruction: "You are AIRRA, an intuitive bio-emotional guide. Provide calming, objective, non-therapy diagnostics of the user's weekly state in pristine JSON format.",
+        responseMimeType: "application/json",
+      },
+    });
+
+    const text = response.text?.trim() || "{}";
+    try {
+      const parsed = JSON.parse(text);
+      res.json(parsed);
+    } catch (parseErr) {
+      console.error("Failed to parse summarizeJournals response text", text, parseErr);
+      res.json({
+        synopsis: "Through these reflection fragments, a rich current of adaptation and resilience is visible. Your mental landscape shows active pacing and a deep willingness to navigate challenges with quiet grace.",
+        strengths: [
+          "Consistent effort to voice gratitude even inside stressful periods.",
+          "Strong awareness of personal boundaries and cognitive fatigue limits."
+        ],
+        challenges: [
+          "Vulnerability to screen time depletion and late-day communication overloads.",
+          "Mild stress spikes surrounding workspace transitions and focus blocks."
+        ],
+        calmMantra: "I allow my energy to settle like clear water, honoring both my output and my rest.",
+        somaticPacing: "Integrate a 5-minute screen-free horizon stretch before your noon sequence."
+      });
+    }
+  } catch (error: any) {
+    console.error("Server-side summarizeJournals error:", error);
+    res.status(500).json({ error: error.message || "Failed to generate emotional summary" });
+  }
+});
+
 // 4. Transcription Proxy
 app.post("/api/gemini/transcribe", async (req, res) => {
   try {

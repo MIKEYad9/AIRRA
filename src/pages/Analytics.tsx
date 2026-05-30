@@ -44,14 +44,14 @@ export default function AnalyticsPage() {
             </p>
           </div>
 
-          <div className="flex gap-4">
-            <button className="h-16 px-10 rounded-[1.5rem] bg-airra-surface dark:bg-zinc-900 border border-airra-border/50 dark:border-white/5 text-[10px] font-black uppercase tracking-widest text-airra-muted hover:text-airra-text dark:hover:text-white transition-all flex items-center gap-4 shadow-inner">
-              <Download size={18} />
-              Export Dossier
+          <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+            <button className="h-16 px-6 sm:px-10 rounded-[1.5rem] bg-airra-surface dark:bg-zinc-900 border border-airra-border/50 dark:border-white/5 text-[10px] font-black uppercase tracking-widest text-airra-muted hover:text-airra-text dark:hover:text-white transition-all flex items-center justify-center gap-3 sm:gap-4 shadow-inner w-full sm:w-auto">
+              <Download size={18} className="shrink-0" />
+              <span className="truncate">Export Dossier</span>
             </button>
-            <button className="h-16 px-10 rounded-[1.5rem] bg-airra-text dark:bg-white text-airra-bg dark:text-zinc-950 text-[10px] font-black uppercase tracking-widest flex items-center gap-4 shadow-airra-xl hover:scale-105 transition-all">
-              <FileText size={18} />
-              Full Synthesis
+            <button className="h-16 px-6 sm:px-10 rounded-[1.5rem] bg-airra-text dark:bg-white text-airra-bg dark:text-zinc-950 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 sm:gap-4 shadow-airra-xl hover:scale-105 transition-all w-full sm:w-auto">
+              <FileText size={18} className="shrink-0" />
+              <span className="truncate">Full Synthesis</span>
             </button>
           </div>
         </div>

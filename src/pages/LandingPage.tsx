@@ -23,11 +23,13 @@ import {
   BookOpen,
   ExternalLink
 } from "lucide-react";
+import { BLOG_POSTS } from "@/src/data/blogData";
 
 export default function LandingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isEfficacyModalOpen, setIsEfficacyModalOpen] = React.useState(false);
   const [isBrowseExperiencesOpen, setIsBrowseExperiencesOpen] = React.useState(false);
+  const [activeSpecTab, setActiveSpecTab] = React.useState<"stress" | "calibrated" | "sovereign">("stress");
 
   // Community Experience Reviews State (Preloaded values + localStorage persistence)
   const [reviews, setReviews] = React.useState<{
@@ -341,7 +343,10 @@ export default function LandingPage() {
               <ArrowRight size={18} className="relative z-10 group-hover:translate-x-3 transition-transform duration-500" />
               <div className="absolute inset-0 bg-gradient-to-r from-airra-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             </Link>
-            <button className="flex-1 h-16 sm:h-24 rounded-2xl sm:rounded-3xl airra-glass border-2 border-airra-text/10 dark:border-white/10 text-airra-text dark:text-white text-[10px] sm:text-[11px] font-black uppercase tracking-[0.25em] sm:tracking-[0.4em] hover:bg-airra-text hover:text-airra-bg dark:hover:bg-white dark:hover:text-zinc-950 transition-all flex items-center justify-center gap-4 sm:gap-6 group">
+            <button 
+              onClick={() => document.getElementById('explore-airra-section')?.scrollIntoView({ behavior: 'smooth' })}
+              className="flex-1 h-16 sm:h-24 rounded-2xl sm:rounded-3xl airra-glass border-2 border-airra-text/10 dark:border-white/10 text-airra-text dark:text-white text-[10px] sm:text-[11px] font-black uppercase tracking-[0.25em] sm:tracking-[0.4em] hover:bg-airra-text hover:text-airra-bg dark:hover:bg-white dark:hover:text-zinc-950 transition-all flex items-center justify-center gap-4 sm:gap-6 group cursor-pointer"
+            >
               Explore AIRRA
               <ChevronRight size={18} className="group-hover:translate-x-2 transition-transform duration-500" />
             </button>
@@ -595,6 +600,371 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ======================================================= */}
+      {/* EXPLORE AIRRA: INTERACTIVE DESIGN, SPECS & EFFICACY */}
+      {/* ======================================================= */}
+      <section id="explore-airra-section" className="relative z-30 px-4 sm:px-8 py-16 sm:py-24 md:py-36 border-t border-airra-border/50 dark:border-white/5 bg-gradient-to-b from-[#FAFDFB] to-slate-50 dark:from-[#050C08] dark:to-zinc-950/40">
+        <div className="max-w-7xl mx-auto space-y-16 sm:space-y-24">
+          
+          {/* Header */}
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+            <div className="space-y-4 sm:space-y-6 max-w-3xl">
+              <div className="inline-flex items-center gap-2 text-[9px] sm:text-[10px] font-mono font-black uppercase text-[#2D6A4F] dark:text-emerald-400 bg-[#E8F0EC]/80 dark:bg-emerald-950/25 px-3.5 py-1.5 rounded-full border border-emerald-500/10">
+                <Sparkles size={11} className="text-[#2D6A4F] dark:text-emerald-400 shrink-0" /> EXPERIMENT & COGNITIVE MODEL SPECIFICATIONS
+              </div>
+              <h2 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-display font-black uppercase leading-none tracking-tighter">
+                Explore <span className="italic font-serif normal-case text-[#2D6A4F] dark:text-emerald-400 font-normal">AIRRA</span>.
+              </h2>
+              <p className="text-base sm:text-lg md:text-xl text-airra-muted dark:text-zinc-400 font-medium leading-relaxed">
+                Test the underlying sensory engine. Explore the biometric efficiency parameters, clinical specs, and deep publications driving our non-pharmacological wellness system.
+              </p>
+            </div>
+          </div>
+
+          {/* Interactive Biomimetic Simulator & Specs Panel */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-stretch">
+            
+            {/* Control Panel (4 Golden Steps of Calibration) */}
+            <div className="lg:col-span-5 flex flex-col justify-between gap-6 sm:gap-8 p-6 sm:p-10 rounded-[2rem] bg-white dark:bg-zinc-900 border border-airra-border/40 dark:border-white/5 shadow-airra-sm">
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#2D6A4F] dark:text-emerald-400 block font-mono">Sensory Controller</span>
+                  <h3 className="text-2xl sm:text-3xl font-display font-black uppercase tracking-tight">Active State Modulator</h3>
+                  <p className="text-xs sm:text-sm text-airra-muted dark:text-zinc-400 leading-relaxed font-medium">
+                    Simulate how the AIRRA platform recalculates system variables based on voice micro-jitter, text sentiment entropy, and environmental stress signals.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Select State 1: Stress Loop */}
+                  <button
+                    onClick={() => setActiveSpecTab("stress")}
+                    className={`w-full text-left p-4 sm:p-5 rounded-2xl border transition-all duration-500 cursor-pointer flex gap-4 items-center ${
+                      activeSpecTab === "stress"
+                        ? "border-amber-500/40 bg-amber-500/10 text-amber-950 dark:text-amber-100"
+                        : "border-airra-border/30 dark:border-white/5 hover:border-airra-muted/40 bg-transparent text-airra-muted hover:text-airra-text dark:hover:text-white"
+                    }`}
+                  >
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-mono text-[10px] font-black uppercase shrink-0 ${
+                      activeSpecTab === "stress" ? "bg-amber-500 text-white" : "bg-airra-bg dark:bg-zinc-800"
+                    }`}>1</div>
+                    <div className="truncate">
+                      <span className="text-[9px] font-mono font-black uppercase tracking-wider block opacity-70">Phase 01</span>
+                      <span className="text-sm sm:text-base font-bold font-display uppercase tracking-tight block">Acute Stress Peak</span>
+                    </div>
+                  </button>
+
+                  {/* Select State 2: Calibration */}
+                  <button
+                    onClick={() => setActiveSpecTab("calibrated")}
+                    className={`w-full text-left p-4 sm:p-5 rounded-2xl border transition-all duration-500 cursor-pointer flex gap-4 items-center ${
+                      activeSpecTab === "calibrated"
+                        ? "border-[#2D6A4F]/40 bg-[#2D6A4F]/10 text-[#2D6A4F] dark:text-emerald-100"
+                        : "border-airra-border/30 dark:border-white/5 hover:border-airra-muted/40 bg-transparent text-airra-muted hover:text-airra-text dark:hover:text-white"
+                    }`}
+                  >
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-mono text-[10px] font-black uppercase shrink-0 ${
+                      activeSpecTab === "calibrated" ? "bg-[#2D6A4F] text-white" : "bg-airra-bg dark:bg-zinc-800"
+                    }`}>2</div>
+                    <div className="truncate">
+                      <span className="text-[9px] font-mono font-black uppercase tracking-wider block opacity-70">Phase 02</span>
+                      <span className="text-sm sm:text-base font-bold font-display uppercase tracking-tight block">Sensory Resonance</span>
+                    </div>
+                  </button>
+
+                  {/* Select State 3: Sovereign Equilibrium */}
+                  <button
+                    onClick={() => setActiveSpecTab("sovereign")}
+                    className={`w-full text-left p-4 sm:p-5 rounded-2xl border transition-all duration-500 cursor-pointer flex gap-4 items-center ${
+                      activeSpecTab === "sovereign"
+                        ? "border-indigo-500/40 bg-indigo-500/10 text-indigo-950 dark:text-indigo-100"
+                        : "border-airra-border/30 dark:border-white/5 hover:border-airra-muted/40 bg-transparent text-airra-muted hover:text-airra-text dark:hover:text-white"
+                    }`}
+                  >
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-mono text-[10px] font-black uppercase shrink-0 ${
+                      activeSpecTab === "sovereign" ? "bg-indigo-500 text-white" : "bg-airra-bg dark:bg-zinc-800"
+                    }`}>3</div>
+                    <div className="truncate">
+                      <span className="text-[9px] font-mono font-black uppercase tracking-wider block opacity-70">Phase 03</span>
+                      <span className="text-sm sm:text-base font-bold font-display uppercase tracking-tight block">Sovereign Equilibrium</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Underlying Spec Sheet Stats */}
+              <div className="pt-6 sm:pt-8 mt-6 border-t border-airra-border/25 dark:border-white/5 grid grid-cols-2 gap-4">
+                <div className="space-y-11 truncate">
+                  <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-airra-muted block">Biometric Port Latency</span>
+                  <span className="text-lg sm:text-xl font-display font-black text-slate-800 dark:text-white">0.2 seconds</span>
+                </div>
+                <div className="space-y-1 truncate">
+                  <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-airra-muted block">Security Enclosure</span>
+                  <span className="text-lg sm:text-xl font-display font-black text-slate-800 dark:text-white">AES-256 HSM</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Active Output Metrics Display */}
+            <div className="lg:col-span-7 airra-card p-6 sm:p-12 space-y-8 sm:space-y-10 flex flex-col justify-between relative overflow-hidden bg-white/40 dark:bg-zinc-950/20 shadow-airra-lg border-airra-border/40 dark:border-white/5">
+              
+              {/* Decorative Tech Rings */}
+              <div className="absolute top-[-5%] right-[-5%] w-72 h-72 rounded-full border border-dashed border-[#2D6A4F]/10 pointer-events-none" />
+              <div className="absolute top-[-10%] right-[-10%] w-96 h-96 rounded-full border border-[#2D6A4F]/5 pointer-events-none" />
+
+              {/* Screen Top Header */}
+              <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 sm:pb-8 border-b border-airra-border/25 dark:border-white/5">
+                <div className="space-y-1">
+                  <span className="text-[9px] font-mono font-black uppercase tracking-widest bg-slate-100 dark:bg-zinc-900 px-3 py-1.5 rounded-md text-airra-muted">
+                    {activeSpecTab === "stress" ? "🔴 Phase 01 / Critical" : activeSpecTab === "calibrated" ? "🟡 Phase 02 / Syncing" : "🟢 Phase 03 / Optimized"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#3DB88A] animate-ping" />
+                  <span className="text-[9px] font-mono font-black uppercase tracking-widest text-airra-muted">Real-time Biosensor active</span>
+                </div>
+              </div>
+
+              {/* Center Content Section */}
+              <div className="relative z-10 space-y-6 sm:space-y-8 my-4 sm:my-6">
+                
+                {/* Dynamically Populated Info based on selected state */}
+                <div className="space-y-3">
+                  <h4 className="text-xl sm:text-3xl font-display font-black uppercase text-slate-800 dark:text-zinc-100 tracking-tight leading-tight">
+                    {activeSpecTab === "stress" 
+                      ? "Neural Extraction & Amygdala Disconnection" 
+                      : activeSpecTab === "calibrated" 
+                        ? "Atmospheric Chromotherapy Calibration Loops" 
+                        : "Sovereign Cognitive Equilibrium Achieved"}
+                  </h4>
+                  <p className="text-xs sm:text-sm md:text-base text-airra-muted dark:text-zinc-400 font-medium leading-relaxed">
+                    {activeSpecTab === "stress" 
+                      ? "Continuous screen loops exploit sensory triggers. The nervous system registers a flight response, leading to rapid vascular compression, shallow breathing, and localized prefrontal cortex exhaustion."
+                      : activeSpecTab === "calibrated" 
+                        ? "Active visual anchors transition the interface into low-frequency color bounds. Microtonal acoustic generators calibrate binaural resonances, while soft diaphragmatic cues align heart-rate variability."
+                        : "Full zero-knowledge protection enables total emotional safety. The user represents an airtight sovereign baseline with maximal executive reserve, optimized heart-rate coherence, and minimal macular exhaustion."}
+                  </p>
+                </div>
+
+                {/* Technical Bars Indicator */}
+                <div className="space-y-4 pt-4">
+                  {/* Parameter 1 */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-airra-muted">
+                      <span>Vagal Coherence (HRV Balance)</span>
+                      <span className="font-extrabold text-slate-800 dark:text-white">
+                        {activeSpecTab === "stress" ? "24ms (Vulnerable)" : activeSpecTab === "calibrated" ? "58ms (+140% Recovery)" : "84ms (+250% Vagal Peak)"}
+                      </span>
+                    </div>
+                    <div className="h-2 w-full bg-slate-100 dark:bg-zinc-900 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: activeSpecTab === "stress" ? "24%" : activeSpecTab === "calibrated" ? "58%" : "84%" }}
+                        transition={{ type: "spring", stiffness: 50, damping: 15 }}
+                        className={`h-full rounded-full ${activeSpecTab === "stress" ? "bg-amber-500" : activeSpecTab === "calibrated" ? "bg-emerald-500" : "bg-indigo-500"}`}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Parameter 2 */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-airra-muted">
+                      <span>Visual Focal Cortex Strain</span>
+                      <span className="font-extrabold text-slate-800 dark:text-white">
+                        {activeSpecTab === "stress" ? "76% (High Macular Load)" : activeSpecTab === "calibrated" ? "18% (Suppressed)" : "2% (Ocular Re-centered)"}
+                      </span>
+                    </div>
+                    <div className="h-2 w-full bg-slate-100 dark:bg-zinc-900 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: activeSpecTab === "stress" ? "76%" : activeSpecTab === "calibrated" ? "18%" : "2%" }}
+                        transition={{ type: "spring", stiffness: 50, damping: 15 }}
+                        className={`h-full rounded-full ${activeSpecTab === "stress" ? "bg-amber-400" : activeSpecTab === "calibrated" ? "bg-teal-400" : "bg-emerald-400"}`}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Parameter 3 */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-airra-muted">
+                      <span>Somatic Sensory Noise Floor</span>
+                      <span className="font-extrabold text-slate-800 dark:text-white">
+                        {activeSpecTab === "stress" ? "88% (Hyper-Stimulated)" : activeSpecTab === "calibrated" ? "38% (Adaptive Balance)" : "6% (Tranquil Baseline)"}
+                      </span>
+                    </div>
+                    <div className="h-2 w-full bg-slate-100 dark:bg-zinc-900 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: activeSpecTab === "stress" ? "88%" : activeSpecTab === "calibrated" ? "38%" : "6%" }}
+                        transition={{ type: "spring", stiffness: 50, damping: 15 }}
+                        className={`h-full rounded-full ${activeSpecTab === "stress" ? "bg-amber-600" : activeSpecTab === "calibrated" ? "bg-teal-500" : "bg-slate-400"}`}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Outcomes Indicator */}
+              <div className="relative z-10 pt-6 sm:pt-8 border-t border-airra-border/25 dark:border-white/5 flex flex-col sm:flex-row gap-6 justify-between sm:items-center">
+                <div className="space-y-1">
+                  <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-[#2D6A4F] dark:text-emerald-400 block font-mono">Real-time Efficiency Score</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl sm:text-4xl font-display font-black text-slate-800 dark:text-white">
+                      {activeSpecTab === "stress" ? "42%" : activeSpecTab === "calibrated" ? "78%" : "96%"}
+                    </span>
+                    <span className="text-xs text-airra-muted font-medium">calculated index</span>
+                  </div>
+                </div>
+                <div className="shrink-0">
+                  <span className="text-[9px] font-mono font-black uppercase tracking-widest block text-airra-muted mb-2">Cognitive Load Status</span>
+                  <span className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border font-mono ${
+                    activeSpecTab === "stress" 
+                      ? "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400" 
+                      : activeSpecTab === "calibrated" 
+                        ? "bg-emerald-500/10 border-emerald-500/30 text-[#2D6A4F] dark:text-emerald-400" 
+                        : "bg-indigo-500/10 border-indigo-500/30 text-indigo-600 dark:text-indigo-400"
+                  }`}>
+                    {activeSpecTab === "stress" ? "Extreme Hazard" : activeSpecTab === "calibrated" ? "Stabilized" : "Absolute Sovereignty"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Detailed Specifications Segment - Solid Bragging Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 pt-6">
+            
+            {/* Stat 1 */}
+            <div className="p-6 rounded-[1.5rem] bg-white dark:bg-zinc-900 border border-airra-border/40 dark:border-white/5 space-y-3 hover:border-[#2D6A4F]/20 transition-all duration-300">
+              <span className="text-3xl sm:text-4xl font-display font-black text-slate-800 dark:text-white font-serif block italic leading-none">0.2s</span>
+              <span className="text-[9px] font-mono font-black uppercase tracking-widest text-[#2D6A4F] dark:text-emerald-400 block">Analysis Latency</span>
+              <p className="text-xs text-airra-muted dark:text-zinc-400 font-medium leading-relaxed font-sans">
+                Real-time acoustic micro-fluctuations and speech pattern jitter tracking across twenty-four semantic emotional dimensions.
+              </p>
+            </div>
+
+            {/* Stat 2 */}
+            <div className="p-6 rounded-[1.5rem] bg-white dark:bg-zinc-900 border border-airra-border/40 dark:border-white/5 space-y-3 hover:border-[#2D6A4F]/20 transition-all duration-300">
+              <span className="text-3xl sm:text-4xl font-display font-black text-slate-800 dark:text-white font-serif block italic leading-none">+34%</span>
+              <span className="text-[9px] font-mono font-black uppercase tracking-widest text-[#2D6A4F] dark:text-emerald-400 block">HRV Coherence Ratio</span>
+              <p className="text-xs text-airra-muted dark:text-zinc-400 font-medium leading-relaxed font-sans">
+                Vagal nerve stimulation via responsive paced respiration exercises and color chromotherapy verified over clinical participant assays.
+              </p>
+            </div>
+
+            {/* Stat 3 */}
+            <div className="p-6 rounded-[1.5rem] bg-white dark:bg-zinc-900 border border-airra-border/40 dark:border-white/5 space-y-3 hover:border-[#2D6A4F]/20 transition-all duration-300">
+              <span className="text-3xl sm:text-4xl font-display font-black text-slate-800 dark:text-white font-serif block italic leading-none">94%</span>
+              <span className="text-[9px] font-mono font-black uppercase tracking-widest text-[#2D6A4F] dark:text-emerald-400 block">Sentiment Satiety Precision</span>
+              <p className="text-xs text-airra-muted dark:text-zinc-400 font-medium leading-relaxed font-sans">
+                Fine-tuned therapeutic model yields maximum diagnostic accuracy in detecting underlying occupational stress versus cognitive exhaustion.
+              </p>
+            </div>
+
+            {/* Stat 4 */}
+            <div className="p-6 rounded-[1.5rem] bg-white dark:bg-zinc-900 border border-airra-border/40 dark:border-white/5 space-y-3 hover:border-[#2D6A4F]/20 transition-all duration-300">
+              <span className="text-3xl sm:text-4xl font-display font-black text-slate-800 dark:text-white font-serif block italic leading-none">100%</span>
+              <span className="text-[9px] font-mono font-black uppercase tracking-widest text-[#2D6A4F] dark:text-emerald-400 block">Zero-Knowledge Enclosure</span>
+              <p className="text-xs text-airra-muted dark:text-zinc-400 font-medium leading-relaxed font-sans">
+                Decryption strings reside solely on host side. No server telemetry, indexing, scraping, or metadata monetisation can take place.
+              </p>
+            </div>
+
+          </div>
+
+          {/* Premium Knowledge Base / Blog Showcase Inside Explore AIRRA */}
+          <div className="pt-16 sm:pt-24 border-t border-airra-border/25 dark:border-white/5 space-y-8 sm:space-y-12">
+            <div className="space-y-3">
+              <span className="text-[9px] sm:text-[10px] font-mono font-black uppercase text-[#2D6A4F] dark:text-emerald-400 block">AIRRA DIARIES & ESSAYS</span>
+              <h3 className="text-2xl sm:text-4xl font-display font-black uppercase tracking-tight text-slate-800 dark:text-white leading-tight">
+                Scientific Essays & Cognitive Deceleration Papers
+              </h3>
+              <p className="text-xs sm:text-base text-airra-muted dark:text-zinc-400 leading-relaxed font-medium">
+                Unpack the clinical foundations, deep neurobiology, and algorithmic theories of the AIRRA environment written by our core architects.
+              </p>
+            </div>
+
+            {/* Dynamically Map 3 Outstanding Editorial Blogs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {BLOG_POSTS.slice(0, 3).map((post) => (
+                <div 
+                  key={post.slug} 
+                  className="flex flex-col group h-full bg-white dark:bg-zinc-900 rounded-[2rem] border border-airra-border/30 dark:border-white/5 overflow-hidden shadow-airra-sm hover:shadow-airra-lg hover:border-emerald-500/25 transition-all duration-500"
+                >
+                  {/* Photo Cover */}
+                  <div className="relative aspect-video w-full overflow-hidden bg-slate-100 dark:bg-zinc-800 shrink-0">
+                    <img 
+                      src={post.coverImage} 
+                      alt={post.title} 
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                    />
+                    <div className="absolute top-4 left-4">
+                      <span className="text-[8px] sm:text-[9px] font-mono font-black uppercase text-white bg-[#2D6A4F] dark:bg-emerald-600 px-3 py-1 rounded-full shadow-sm">
+                        {post.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Body Info */}
+                  <div className="p-6 sm:p-8 flex-grow flex flex-col justify-between space-y-6">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-[9px] font-mono text-airra-muted">
+                        <span>{post.publishedAt}</span>
+                        <span>•</span>
+                        <span>{post.readTime}</span>
+                      </div>
+                      <h4 className="text-lg sm:text-xl font-display font-black text-slate-800 dark:text-white uppercase leading-snug tracking-tight hover:text-airra-primary transition-colors">
+                        <Link to={`/blog/${post.slug}`}>{post.title}</Link>
+                      </h4>
+                      <p className="text-xs text-airra-muted dark:text-zinc-450 leading-relaxed line-clamp-3">
+                        {post.excerpt}
+                      </p>
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-100 dark:border-zinc-800/60 flex items-center justify-between">
+                      {/* Author Card */}
+                      <div className="flex items-center gap-3 truncate max-w-[65%]">
+                        <img 
+                          src={post.author.avatar} 
+                          alt={post.author.name} 
+                          referrerPolicy="no-referrer"
+                          className="w-7 h-7 rounded-full object-cover shadow-inner shrink-0" 
+                        />
+                        <div className="truncate">
+                          <span className="text-[10px] font-extrabold text-slate-800 dark:text-zinc-200 block truncate">{post.author.name}</span>
+                          <span className="text-[8px] text-zinc-400 block truncate font-mono">{post.author.role}</span>
+                        </div>
+                      </div>
+
+                      {/* Read Link */}
+                      <Link 
+                        to={`/blog/${post.slug}`} 
+                        className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-wider text-airra-primary dark:text-emerald-450 hover:underline hover:gap-2.5 transition-all"
+                      >
+                        Read Essay <ArrowUpRight size={12} />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* View all publications footer link */}
+            <div className="text-center pt-4">
+              <Link
+                to="/blog"
+                className="inline-flex h-14 px-8 rounded-full border border-airra-border/40 dark:border-white/10 hover:border-emerald-500/30 text-slate-800 dark:text-zinc-100 hover:text-white hover:bg-[#2D6A4F] text-[10px] font-black uppercase tracking-widest transition-all items-center gap-3 cursor-pointer shadow-inner"
+              >
+                Access Global Science Archive <BookOpen size={14} />
+              </Link>
+            </div>
+          </div>
+
         </div>
       </section>
 

@@ -1166,25 +1166,92 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
                 filter: drop-shadow(0 0 2px rgba(20, 184, 166, 0.4));
               }
             }
-            @keyframes hrvTrailPulse {
+            @keyframes hrvTrailPulseInhale {
               0% {
-                stroke-width: 5px;
+                stroke-width: 4px;
                 opacity: 0.15;
+                filter: drop-shadow(0 0 2px rgba(45, 212, 191, 0.4));
               }
               50% {
-                stroke-width: 7.5px;
-                opacity: 0.35;
+                stroke-width: 8px;
+                opacity: 0.55;
+                filter: drop-shadow(0 0 15px rgba(45, 212, 191, 0.95)) drop-shadow(0 0 5px rgba(45, 212, 191, 0.5));
               }
               100% {
-                stroke-width: 5px;
+                stroke-width: 4px;
                 opacity: 0.15;
+                filter: drop-shadow(0 0 2px rgba(45, 212, 191, 0.4));
+              }
+            }
+            @keyframes hrvTrailPulseHold {
+              0% {
+                stroke-width: 5.5px;
+                opacity: 0.25;
+                filter: drop-shadow(0 0 3px rgba(245, 158, 11, 0.35));
+              }
+              50% {
+                stroke-width: 9px;
+                opacity: 0.7;
+                filter: drop-shadow(0 0 22px rgba(245, 158, 11, 0.95)) drop-shadow(0 0 8px rgba(245, 158, 11, 0.6));
+              }
+              100% {
+                stroke-width: 5.5px;
+                opacity: 0.25;
+                filter: drop-shadow(0 0 3px rgba(245, 158, 11, 0.35));
+              }
+            }
+            @keyframes hrvTrailPulseExhale {
+              0% {
+                stroke-width: 4px;
+                opacity: 0.15;
+                filter: drop-shadow(0 0 2px rgba(99, 102, 241, 0.3));
+              }
+              50% {
+                stroke-width: 7px;
+                opacity: 0.45;
+                filter: drop-shadow(0 0 14px rgba(99, 102, 241, 0.9)) drop-shadow(0 0 5px rgba(99, 102, 241, 0.4));
+              }
+              100% {
+                stroke-width: 4px;
+                opacity: 0.15;
+                filter: drop-shadow(0 0 2px rgba(99, 102, 241, 0.3));
+              }
+            }
+            @keyframes hrvTrailPulseReady {
+              0% {
+                stroke-width: 3.5px;
+                opacity: 0.12;
+                filter: drop-shadow(0 0 2px rgba(20, 184, 166, 0.2));
+              }
+              50% {
+                stroke-width: 5.5px;
+                opacity: 0.3;
+                filter: drop-shadow(0 0 8px rgba(20, 184, 166, 0.4));
+              }
+              105% {
+                stroke-width: 3.5px;
+                opacity: 0.12;
+                filter: drop-shadow(0 0 2px rgba(20, 184, 166, 0.2));
               }
             }
             .active-hrv-line path.recharts-curve {
               animation: hrvPulse 2.5s infinite ease-in-out;
             }
-            .active-hrv-trail path.recharts-curve {
-              animation: hrvTrailPulse 2.5s infinite ease-in-out;
+            .active-hrv-trail.hrv-trail-inhale path.recharts-curve {
+              animation: hrvTrailPulseInhale 4s infinite cubic-bezier(0.4, 0, 0.2, 1);
+              stroke: #2DD4BF !important;
+            }
+            .active-hrv-trail.hrv-trail-hold path.recharts-curve {
+              animation: hrvTrailPulseHold 7s infinite ease-in-out;
+              stroke: #F59E0B !important;
+            }
+            .active-hrv-trail.hrv-trail-exhale path.recharts-curve {
+              animation: hrvTrailPulseExhale 8s infinite cubic-bezier(0.1, 0.8, 0.3, 1);
+              stroke: #6366F1 !important;
+            }
+            .active-hrv-trail.hrv-trail-ready path.recharts-curve {
+              animation: hrvTrailPulseReady 3s infinite ease-in-out;
+              stroke: #14B8A6 !important;
             }
           `}</style>
 
@@ -1570,7 +1637,7 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
                             opacity={0.3}
                             dot={false}
                             activeDot={false}
-                            className="active-hrv-trail"
+                            className={`active-hrv-trail hrv-trail-${phase}`}
                             legendType="none"
                           />
                         )}

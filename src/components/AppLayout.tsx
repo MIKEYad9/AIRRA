@@ -11,7 +11,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
            initial={{ opacity: 0, scale: 0.98 }}
            animate={{ opacity: 1, scale: 1 }}
            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-           className="max-w-[1600px] mx-auto px-8 md:px-20 pt-10 md:pt-24"
+           className="max-w-[1600px] mx-auto px-4 md:px-20 pt-6 md:pt-24"
         >
           {children}
         </motion.div>

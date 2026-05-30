@@ -93,19 +93,19 @@ export default function WellnessAnalytics() {
     <div className="space-y-16">
       {/* Topology Header */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <div className="lg:col-span-2 airra-card p-12 space-y-12">
-           <div className="flex justify-between items-end">
-              <div className="space-y-3">
-                 <h3 className="text-4xl font-display font-black uppercase tracking-tighter">Neuro-Equilibrium</h3>
-                 <p className="text-airra-muted font-medium text-lg italic">Longitudinal cognitive stability index</p>
+        <div className="lg:col-span-2 airra-card p-6 sm:p-12 space-y-8 sm:space-y-12">
+           <div className="flex flex-col sm:flex-row gap-6 justify-between sm:items-end">
+              <div className="space-y-2 sm:space-y-3">
+                 <h3 className="text-2xl sm:text-4xl font-display font-black uppercase tracking-tighter">Neuro-Equilibrium</h3>
+                 <p className="text-airra-muted font-medium text-base sm:text-lg italic">Longitudinal cognitive stability index</p>
               </div>
-              <div className="text-right">
-                 <div className="text-5xl font-display font-black text-airra-primary">84%</div>
+              <div className="text-left sm:text-right shrink-0">
+                 <div className="text-4xl sm:text-5xl font-display font-black text-airra-primary">84%</div>
                  <p className="text-[9px] font-black uppercase tracking-widest text-emerald-500">+12% vs last cycle</p>
               </div>
            </div>
            
-           <div className="h-80 w-full">
+           <div className="h-64 sm:h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={moodData}>
                 <defs>
@@ -183,9 +183,9 @@ export default function WellnessAnalytics() {
 
       {/* Sleep & Focus Grids */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-         <div className="airra-card p-12 space-y-10">
-            <h4 className="text-2xl font-display font-black uppercase tracking-tighter flex items-center gap-4">
-              <Moon size={24} className="text-indigo-400" /> Sleep Phases
+         <div className="airra-card p-6 sm:p-12 space-y-8 sm:space-y-10">
+            <h4 className="text-xl sm:text-2xl font-display font-black uppercase tracking-tighter flex items-center gap-4">
+               <Moon size={24} className="text-indigo-400" /> Sleep Phases
             </h4>
             <div className="h-64 w-full">
                <ResponsiveContainer width="100%" height="100%">
@@ -208,18 +208,18 @@ export default function WellnessAnalytics() {
             </div>
          </div>
 
-         <div className="airra-card p-12 space-y-10 bg-airra-text dark:bg-white text-airra-bg dark:text-zinc-950 relative overflow-hidden">
+         <div className="airra-card p-6 sm:p-12 space-y-8 sm:space-y-10 bg-airra-text dark:bg-white text-airra-bg dark:text-zinc-950 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-60 h-60 bg-airra-primary blur-[100px] opacity-20 pointer-events-none" />
-            <div className="relative z-10 space-y-10">
+            <div className="relative z-10 space-y-8 sm:space-y-10">
                <div className="flex justify-between items-center">
-                  <h4 className="text-2xl font-display font-black uppercase tracking-tighter">AI Prediction Brief</h4>
+                  <h4 className="text-xl sm:text-2xl font-display font-black uppercase tracking-tighter">AI Prediction Brief</h4>
                   <ShieldCheck size={24} className="opacity-40" />
                </div>
                <div className="space-y-6">
-                  <p className="text-3xl font-serif italic leading-tight">
-                    "Cognitive load analysis suggests a pending focus decay in cycle 08. Pre-empt with 5-minute <span className="airra-gradient-text">Neural Calibration</span>."
+                  <p className="text-2xl sm:text-3xl font-serif italic leading-tight">
+                     "Cognitive load analysis suggests a pending focus decay in cycle 08. Pre-empt with 5-minute <span className="airra-gradient-text">Neural Calibration</span>."
                   </p>
-                  <div className="p-8 airra-bg dark:bg-zinc-800/20 rounded-3xl border border-white/10 space-y-4">
+                  <div className="p-6 sm:p-8 airra-bg dark:bg-zinc-800/20 rounded-3xl border border-white/10 space-y-4">
                      <span className="text-[10px] font-black uppercase tracking-widest text-airra-primary">Suggested Action</span>
                      <p className="text-sm font-medium leading-relaxed opacity-60">Initialize Gamma-wave binaural sync for 12 minutes to maintain equilibrium.</p>
                   </div>
@@ -232,31 +232,31 @@ export default function WellnessAnalytics() {
       </div>
 
       {/* Wellness Progress: Sovereign Streak Tracker */}
-      <div className="airra-card p-12 space-y-12">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+       <div className="airra-card p-6 sm:p-12 space-y-8 sm:space-y-12">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-3">
             <div className="inline-flex items-center gap-2 text-[9px] font-mono font-black uppercase tracking-widest text-[#2D6A4F] dark:text-emerald-450 bg-[#E8F0EC]/85 dark:bg-emerald-950/40 px-3.5 py-1.5 rounded-full">
               <TrendingUp className="w-3.5 h-3.5" /> Longitudinal Alignment
             </div>
-            <h4 className="text-3xl font-display font-black uppercase tracking-tighter">Sovereign Streak Progress</h4>
-            <p className="text-airra-muted font-medium text-lg italic">Tracking consecutive daily neural calibrations & bio-metric updates over recent cycles</p>
+            <h4 className="text-xl sm:text-3xl font-display font-black uppercase tracking-tighter">Sovereign Streak Progress</h4>
+            <p className="text-airra-muted font-medium text-base sm:text-lg italic">Tracking consecutive daily neural calibrations & bio-metric updates over recent cycles</p>
           </div>
-          <div className="flex items-center gap-8 bg-airra-bg dark:bg-zinc-900/40 px-8 py-5 rounded-[1.5rem] border border-airra-border/20 dark:border-white/5">
+          <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-8 bg-airra-bg dark:bg-zinc-900/40 px-6 sm:px-8 py-4 sm:py-5 rounded-[1.5rem] border border-airra-border/20 dark:border-white/5 w-full lg:w-auto">
             <div>
               <span className="text-[9px] font-black uppercase tracking-widest text-airra-muted block">Current Streak</span>
-              <span className="text-3xl font-display font-black text-[#2D6A4F] dark:text-emerald-450">{currentStreak} Days</span>
+              <span className="text-2xl sm:text-3xl font-display font-black text-[#2D6A4F] dark:text-emerald-450">{currentStreak} Days</span>
             </div>
             <div className="w-[1px] h-10 bg-airra-border/30 dark:bg-white/10" />
             <div>
               <span className="text-[9px] font-black uppercase tracking-widest text-airra-muted block">Consist. Index</span>
-              <span className="text-3xl font-display font-black text-airra-text dark:text-white">
+              <span className="text-2xl sm:text-3xl font-display font-black text-airra-text dark:text-white">
                 {Math.min(100, Math.round(currentStreak * 12.5 + 40))}%
               </span>
             </div>
           </div>
         </div>
 
-        <div className="h-80 w-full">
+        <div className="h-64 sm:h-80 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={streakHistory}>
               <XAxis 
@@ -324,7 +324,7 @@ export default function WellnessAnalytics() {
 
 function CardStat({ icon, title, value, desc, color }: { icon: React.ReactNode, title: string, value: string, desc: string, color: string }) {
   return (
-    <div className="airra-card p-10 flex items-center gap-8 group hover:bg-white dark:hover:bg-zinc-900 transition-all duration-700">
+    <div className="airra-card p-6 sm:p-10 flex items-center gap-4 sm:gap-8 group hover:bg-white dark:hover:bg-zinc-900 transition-all duration-700">
       <div className={`w-16 h-16 rounded-[1.5rem] bg-airra-bg dark:bg-zinc-800 flex items-center justify-center ${color} shadow-inner group-hover:scale-110 transition-transform`}>
         {React.cloneElement(icon as React.ReactElement, { size: 28 })}
       </div>

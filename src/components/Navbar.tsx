@@ -8,7 +8,20 @@ export default function Navbar() {
   const location = useLocation();
 
   // Hide main nav if in dashboard or any app shell page
-  const appShellRoutes = ['/dashboard', '/journals', '/consultation', '/analytics', '/community', '/onboarding', '/workspace'];
+  const appShellRoutes = [
+    '/dashboard', 
+    '/journals', 
+    '/consultation', 
+    '/analytics', 
+    '/community', 
+    '/onboarding', 
+    '/workspace',
+    '/profile',
+    '/experience',
+    '/saved',
+    '/diagnostic',
+    '/admin-beta'
+  ];
   const isExcluded = appShellRoutes.some(route => location.pathname.startsWith(route)) || location.pathname === '/login' || location.pathname === '/';
   if (isExcluded) return null;
 
