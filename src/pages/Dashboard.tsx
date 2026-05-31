@@ -7,6 +7,7 @@ import { supabase } from "@/src/lib/supabase";
 import AIChat from "@/src/components/AIChat";
 import MentalHealthCheckIn from "@/src/components/MentalHealthCheckIn";
 import JournalEditor from "@/src/components/JournalEditor";
+import BreathingTimer from "@/src/components/BreathingTimer";
 import { 
   Sparkles, 
   BrainCircuit, 
@@ -26,7 +27,9 @@ import {
   Clock,
   Focus,
   FileText,
-  CheckCircle2
+  CheckCircle2,
+  Wind,
+  X
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -83,6 +86,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { profile, setProfile } = useUserStore();
   const [isJournaling, setIsJournaling] = useState(false);
+  const [isBreathingOpen, setIsBreathingOpen] = useState(false);
   const navigate = useNavigate();
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -97,6 +101,18 @@ export default function Dashboard() {
   const [forceStreakSaver, setForceStreakSaver] = useState<boolean>(false);
   const [timeLeftStr, setTimeLeftStr] = useState<string>("");
   const [isStreakSaverTime, setIsStreakSaverTime] = useState<boolean>(false);
+
+  const [isDark, setIsDark] = useState(true);
+  React.useEffect(() => {
+    const checkDark = () => {
+      const darkActive = document.documentElement.classList.contains("dark") || localStorage.getItem("theme") === "dark";
+      setIsDark(darkActive);
+    };
+    checkDark();
+    const observer = new MutationObserver(checkDark);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
 
   React.useEffect(() => {
     const updateTimeLeft = () => {
@@ -414,11 +430,18 @@ export default function Dashboard() {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.3 }}
-          className="flex items-center gap-6"
+          className="flex flex-wrap items-center gap-4 sm:gap-6"
         >
           <button 
+            onClick={() => setIsBreathingOpen(true)}
+            className="h-20 px-8 rounded-[2rem] bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] uppercase tracking-[0.2em] shadow-airra-xl hover:scale-105 transition-all flex items-center justify-center gap-4 group cursor-pointer border border-emerald-500/20"
+          >
+            <Wind size={20} className="group-hover:scale-110 transition-transform animate-pulse text-emerald-100" />
+            Quick Breath
+          </button>
+          <button 
             onClick={() => setIsJournaling(true)}
-            className="h-20 px-10 rounded-[2rem] bg-airra-text dark:bg-white text-airra-bg dark:text-zinc-950 font-black text-[10px] uppercase tracking-[0.2em] shadow-airra-xl hover:scale-105 transition-all flex items-center justify-center gap-4 group"
+            className="h-20 px-8 rounded-[2rem] bg-airra-text dark:bg-white text-airra-bg dark:text-zinc-950 font-black text-[10px] uppercase tracking-[0.2em] shadow-airra-xl hover:scale-105 transition-all flex items-center justify-center gap-4 group cursor-pointer"
           >
             <Feather size={20} className="group-hover:-rotate-12 transition-transform" />
             Capture Logic
@@ -1079,6 +1102,69 @@ export default function Dashboard() {
             <Sparkles className="text-[#3DB88A]" size={16} />
             {toastMessage}
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Persistent Quick Breath Floating Action Button */}
+      <div className="fixed bottom-28 right-10 z-40">
+        <motion.button
+          whileHover={{ scale: 1.05, y: -4 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setIsBreathingOpen(true)}
+          className="h-14 px-6 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-[10px] uppercase tracking-[0.2em] shadow-[0_10px_30px_rgba(16,185,129,0.35)] hover:shadow-[0_12px_35px_rgba(16,185,129,0.5)] border border-emerald-400/30 flex items-center gap-3 transition-all cursor-pointer"
+          title="Immediate Breathwork Relief"
+        >
+          <Wind size={18} className="animate-pulse" />
+          <span>Quick Breath</span>
+        </motion.button>
+      </div>
+
+      {/* Quick Breath Modal */}
+      <AnimatePresence>
+        {isBreathingOpen && (
+          <div id="quick-breath-modal" className="fixed inset-0 z-[1000] flex items-center justify-center p-4 sm:p-6">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsBreathingOpen(false)}
+              className="absolute inset-0 bg-zinc-950/85 backdrop-blur-md"
+            />
+
+            {/* Modal Container */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 30 }}
+              transition={{ type: "spring", damping: 25, stiffness: 180 }}
+              className="relative w-full max-w-6xl rounded-[2.5rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 shadow-airra-xl z-20 overflow-hidden flex flex-col my-8 max-h-[90vh]"
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-8 py-6 border-b border-slate-150 dark:border-white/5 bg-slate-50/50 dark:bg-zinc-950/40 shrink-0">
+                <div className="flex items-center gap-3">
+                  <span className="text-[9px] font-black uppercase tracking-[0.25em] text-[#2D6A4F] dark:text-emerald-400 bg-[#E8F0EC]/80 dark:bg-emerald-950/40 px-3.5 py-1.5 rounded-full flex items-center gap-2 font-mono">
+                    <Wind size={12} className="animate-pulse" /> Immediate Relief Node
+                  </span>
+                  <h3 className="text-xl font-display font-black uppercase tracking-tight text-slate-800 dark:text-white">
+                    Quick Breathing Pacer
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setIsBreathingOpen(false)}
+                  className="p-2.5 rounded-full border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-white"
+                  aria-label="Close modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Core Content Scroll Area */}
+              <div className="p-4 sm:p-6 md:p-8 overflow-y-auto flex-1">
+                <BreathingTimer isDark={isDark} />
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

@@ -77,6 +77,12 @@ export default function JournalEditor({ onSave, onCancel }: JournalEditorProps) 
     remedies: string[];
     affirmation: string;
     emergencyCalm: boolean;
+    guide?: {
+      title: string;
+      tone: 'consoling' | 'celebratory' | 'stabilizing';
+      introduction: string;
+      steps: string[];
+    };
   } | null>(null);
   const [fetchingAnalysis, setFetchingAnalysis] = useState(false);
   const [completedRemedies, setCompletedRemedies] = useState<string[]>([]);
@@ -337,15 +343,34 @@ export default function JournalEditor({ onSave, onCancel }: JournalEditorProps) 
       }
     } catch (err) {
       console.error("Analysis generation error, utilizing safe fallback:", err);
+      const isNegative = vitalSliders.stress >= 5 || vitalSliders.energy <= 5;
       setAiAnalysis({
-        analysis: "Your neuro-vital signal indicates elevated focus paired with moderate tiredness. Settle in and let the active calibration take place.",
+        analysis: "Your neuro-vital signal indicates delicate adaptation with elevated focus patterns.",
         remedies: [
           "Practice 3 cycles of rhythmic breath stabilization.",
           "Limit digital screen exposure for 10-15 minutes.",
           "Integrate direct stretching patterns around your back."
         ],
         affirmation: "I am acknowledging the weight I carry, allowing clarity to surface slowly.",
-        emergencyCalm: vitalSliders.stress >= 7
+        emergencyCalm: vitalSliders.stress >= 7,
+        guide: {
+          title: isNegative ? "Somatic Calming Walkthrough" : "Anchoring Daily Joy Practice",
+          tone: isNegative ? "consoling" : "celebratory",
+          introduction: isNegative 
+            ? "Feeling fatigued or anxious is a natural, healthy indicator that your cognitive capacity needs standard replenishment. There is no error in taking space for rest." 
+            : "Your baseline shows exceptional neural resilience and alignment. Let us anchor this elevated energy with brief celebratory somatic pacing.",
+          steps: isNegative 
+            ? [
+                "Gently place one palm over your breastbone, closing your eyes to reset screen luminance.",
+                "Inhale for 4 beats, hold for 2, then breathe out slowly with a soft humming sound to trigger safe vagal tone.",
+                "Gently shift focus from digital interfaces to a physical object across the room."
+              ]
+            : [
+                "Acknowledge the specific moment or detail that generated alignment today.",
+                "Take a deep, expansion breath to occupy physical space and feel the glow.",
+                "Scribble a prompt response to anchor this bright resonance in your internal library."
+              ]
+        }
       });
     } finally {
       setFetchingAnalysis(false);
@@ -977,6 +1002,79 @@ ${journalAnswers.challenge || '*No input captured*'}
                         })}
                       </div>
                     </div>
+
+                    {/* Custom Guide (Consolational / Celebratory depending on tone) */}
+                    {aiAnalysis?.guide && (
+                      <div className={`p-6 sm:p-8 rounded-[2rem] border transition-all duration-300 relative overflow-hidden ${
+                        aiAnalysis.guide.tone === 'consoling' 
+                          ? 'bg-rose-500/5 dark:bg-rose-500/10 border-rose-500/20' 
+                          : aiAnalysis.guide.tone === 'celebratory'
+                            ? 'bg-amber-500/5 dark:bg-amber-500/10 border-amber-500/20'
+                            : 'bg-indigo-500/5 dark:bg-indigo-500/10 border-indigo-500/20'
+                      }`}>
+                        {/* Decorative glow indicator */}
+                        <div className={`absolute top-0 right-0 w-32 h-32 blur-[50px] pointer-events-none opacity-40 ${
+                          aiAnalysis.guide.tone === 'consoling' 
+                            ? 'bg-rose-500/10' 
+                            : aiAnalysis.guide.tone === 'celebratory'
+                              ? 'bg-amber-500/10'
+                              : 'bg-indigo-500/10'
+                        }`} />
+
+                        <div className="space-y-4 relative z-10">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <span className={`text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 ${
+                              aiAnalysis.guide.tone === 'consoling'
+                                ? 'text-rose-600 dark:text-rose-450'
+                                : aiAnalysis.guide.tone === 'celebratory'
+                                  ? 'text-amber-600 dark:text-amber-450'
+                                  : 'text-indigo-600 dark:text-indigo-450'
+                            }`}>
+                              <Sparkles size={11} className="animate-pulse" />
+                              {aiAnalysis.guide.tone === 'consoling' 
+                                ? 'AIRRA Compassionate Sanctuary Guide' 
+                                : aiAnalysis.guide.tone === 'celebratory'
+                                  ? 'AIRRA Alignment Celebration Guide'
+                                  : 'AIRRA Somatic Stabilization Guide'
+                              }
+                            </span>
+                            <span className={`text-[8px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full border self-start sm:self-auto ${
+                              aiAnalysis.guide.tone === 'consoling'
+                                ? 'bg-rose-100 dark:bg-rose-950/40 text-rose-600 border-rose-200 dark:border-rose-900/40'
+                                : aiAnalysis.guide.tone === 'celebratory'
+                                  ? 'bg-amber-100 dark:bg-amber-950/40 text-amber-600 border-amber-200 dark:border-amber-900/40'
+                                  : 'bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 border-indigo-200 dark:border-indigo-900/40'
+                            }`}>
+                              {aiAnalysis.guide.title}
+                            </span>
+                          </div>
+
+                          <p className="text-xs text-zinc-650 dark:text-zinc-300 leading-relaxed italic font-serif">
+                            "{aiAnalysis.guide.introduction}"
+                          </p>
+
+                          <div className="border-t border-zinc-200/50 dark:border-zinc-800/40 pt-4 space-y-3">
+                            <h6 className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Micro-Practice Walkthrough</h6>
+                            <div className="grid grid-cols-1 gap-2">
+                              {aiAnalysis.guide.steps.map((step, idx) => (
+                                <div key={idx} className="flex gap-3 items-start p-3.5 rounded-2xl bg-white/40 dark:bg-zinc-950/30 border border-zinc-200/30 dark:border-zinc-800/30">
+                                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${
+                                    aiAnalysis.guide?.tone === 'consoling'
+                                      ? 'bg-rose-100 dark:bg-rose-950 text-rose-600'
+                                      : aiAnalysis.guide?.tone === 'celebratory'
+                                        ? 'bg-amber-100 dark:bg-amber-950 text-amber-600'
+                                        : 'bg-indigo-100 dark:bg-indigo-950 text-indigo-600'
+                                  }`}>
+                                    {idx + 1}
+                                  </span>
+                                  <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-normal font-medium">{step}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* custom affirmation anchor */}
                     <div className="p-5 rounded-[1.5rem] bg-zinc-50 dark:bg-zinc-950/40 border border-airra-border/40 dark:border-zinc-800 text-center space-y-1">

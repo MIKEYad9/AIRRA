@@ -735,6 +735,7 @@ function JournalCard({
   onDelete: () => void; 
   isSelected: boolean; 
   onToggleSelect: () => void; 
+  key?: any;
 }) {
   return (
     <motion.div

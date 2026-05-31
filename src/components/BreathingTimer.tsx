@@ -682,6 +682,20 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
   };
   const progressRatio = getProgressRatio();
 
+  const getLungExpansionPercentage = () => {
+    if (phase === "ready") return 0;
+    if (phase === "inhale") {
+      const p = (INHALE_DURATION - timeLeft) / INHALE_DURATION;
+      return Math.round(p * 100);
+    }
+    if (phase === "hold") return 100;
+    if (phase === "exhale") {
+      const p = timeLeft / EXHALE_DURATION;
+      return Math.round(p * 100);
+    }
+    return 0;
+  };
+
   // Animated pulse rate for the visual heart indicator (calculated speed relative to current BPM)
   const pulseDuration = biometrics.bpm > 0 ? (60 / biometrics.bpm).toFixed(2) : "0.8";
 
@@ -1049,6 +1063,124 @@ export default function BreathingTimer({ isDark = false }: { isDark?: boolean })
                 </div>
               </div>
             )}
+
+            {/* Real-time Lung Capacity Expansion Visualizer */}
+            <div className="w-full max-w-xs p-4 rounded-2xl bg-slate-500/5 dark:bg-white/5 border border-slate-500/10 dark:border-white/5 space-y-3 relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-zinc-500 flex items-center gap-1">
+                  <Wind size={10} className="text-emerald-500 animate-pulse" />
+                  Lung Expansion Index
+                </span>
+                <span className={`text-[10px] font-mono font-black ${
+                  phase === "ready" 
+                    ? "text-slate-400 dark:text-zinc-500"
+                    : phase === "inhale"
+                      ? "text-teal-600 dark:text-teal-400"
+                      : phase === "hold"
+                        ? "text-amber-600 dark:text-amber-400"
+                        : "text-indigo-600 dark:text-indigo-400"
+                }`}>
+                  {phase === "ready" ? "0%" : `${getLungExpansionPercentage()}%`}
+                </span>
+              </div>
+
+              {/* Interactive Lung Lobes with Framer Motion */}
+              <div className="h-16 flex items-center justify-center gap-1.5 relative">
+                {/* Central airway line */}
+                <div className="absolute top-0 bottom-0 w-0.5 bg-slate-200/50 dark:bg-zinc-800/50 z-0 after:content-[''] after:absolute after:top-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:rounded-full after:bg-slate-300 dark:after:bg-zinc-700" />
+                
+                {/* Left Lobe */}
+                <motion.div
+                  animate={{
+                    scaleX: phase === "ready" ? 0.85 : 0.85 + (getLungExpansionPercentage() / 100) * 0.3,
+                    scaleY: phase === "ready" ? 0.85 : 0.85 + (getLungExpansionPercentage() / 100) * 0.25,
+                    borderWidth: phase === "ready" ? "1px" : "1.5px",
+                    borderColor: phase === "ready" 
+                      ? "rgba(148, 163, 184, 0.2)"
+                      : phase === "inhale"
+                        ? "rgba(20, 184, 166, 0.45)"
+                        : phase === "hold"
+                          ? "rgba(245, 158, 11, 0.45)"
+                          : "rgba(99, 102, 241, 0.45)",
+                    backgroundColor: phase === "ready"
+                      ? "rgba(148, 163, 184, 0.02)"
+                      : phase === "inhale"
+                        ? `rgba(20, 184, 166, ${0.05 + (getLungExpansionPercentage() / 100) * 0.22})`
+                        : phase === "hold"
+                          ? `rgba(245, 158, 11, ${0.15 + (Math.sin(Date.now() / 200) * 0.02)})` // gentle throb during hold
+                          : `rgba(99, 102, 241, ${0.05 + (getLungExpansionPercentage() / 100) * 0.22})`,
+                  }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 45,
+                    damping: 12,
+                    mass: 0.6
+                  }}
+                  className="w-12 h-14 rounded-l-[2.5rem] rounded-tr-[1.25rem] rounded-br-[0.75rem] origin-right z-10 relative flex items-center justify-end pr-2"
+                >
+                  <div className="w-1.5 h-3 rounded-full bg-slate-400/20 dark:bg-white/10" />
+                </motion.div>
+
+                {/* Right Lobe */}
+                <motion.div
+                  animate={{
+                    scaleX: phase === "ready" ? 0.85 : 0.85 + (getLungExpansionPercentage() / 100) * 0.3,
+                    scaleY: phase === "ready" ? 0.85 : 0.85 + (getLungExpansionPercentage() / 100) * 0.25,
+                    borderWidth: phase === "ready" ? "1px" : "1.5px",
+                    borderColor: phase === "ready" 
+                      ? "rgba(148, 163, 184, 0.2)"
+                      : phase === "inhale"
+                        ? "rgba(20, 184, 166, 0.45)"
+                        : phase === "hold"
+                          ? "rgba(245, 158, 11, 0.45)"
+                          : "rgba(99, 102, 241, 0.45)",
+                    backgroundColor: phase === "ready"
+                      ? "rgba(148, 163, 184, 0.02)"
+                      : phase === "inhale"
+                        ? `rgba(20, 184, 166, ${0.05 + (getLungExpansionPercentage() / 100) * 0.22})`
+                        : phase === "hold"
+                          ? `rgba(245, 158, 11, ${0.15 + (Math.sin(Date.now() / 200) * 0.02)})`
+                          : `rgba(99, 102, 241, ${0.05 + (getLungExpansionPercentage() / 100) * 0.22})`,
+                  }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 45,
+                    damping: 12,
+                    mass: 0.6
+                  }}
+                  className="w-12 h-14 rounded-r-[2.5rem] rounded-tl-[1.25rem] rounded-bl-[0.75rem] origin-left z-10 relative flex items-center justify-start pl-2"
+                >
+                  <div className="w-1.5 h-3 rounded-full bg-slate-400/20 dark:bg-white/10" />
+                </motion.div>
+              </div>
+
+              {/* Description captions */}
+              <div className="text-center min-h-[2.5rem] flex items-center justify-center px-2">
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={phase}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className={`text-[9px] font-bold tracking-wide uppercase ${
+                      phase === "ready" 
+                        ? "text-slate-400 dark:text-zinc-500"
+                        : phase === "inhale"
+                          ? "text-teal-600 dark:text-teal-400 font-black"
+                          : phase === "hold"
+                            ? "text-amber-600 dark:text-amber-400 font-black"
+                            : "text-indigo-600 dark:text-indigo-400 font-black"
+                    }`}
+                  >
+                    {phase === "ready" && "Lungs at residual volume. Start breathwork."}
+                    {phase === "inhale" && "Inhaling - Diaphragm contracting & expansion rising"}
+                    {phase === "hold" && "Sustaining - Pure quietness, oxygenating blood"}
+                    {phase === "exhale" && "Exhaling - Complete vocal relief & lung contraction"}
+                  </motion.p>
+                </AnimatePresence>
+              </div>
+            </div>
 
             {/* Ambient Soundscapes Selector */}
             <div className="w-full max-w-xs space-y-2 px-4 text-left">

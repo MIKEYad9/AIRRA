@@ -256,7 +256,7 @@ app.post("/api/gemini/analyzeDay", async (req, res) => {
       - Challenge: ${journalResponses?.challenge || "Not logged"}
     `;
 
-    const prompt = `Analyze this daily check-in completely and objectively. Generate an empathetic, serene emotional wellness audit, tailored physical remedies, a custom affirmation, and identify if emergency calm is recommended.
+    const prompt = `Analyze this daily check-in completely and objectively. Generate an empathetic, serene emotional wellness audit, tailored physical remedies, a custom affirmation, identify if emergency calm is recommended, and include a custom step-by-step Normalized Guide.
 
     Requirements:
     Return ONLY a valid JSON object matching this schema exactly:
@@ -264,7 +264,13 @@ app.post("/api/gemini/analyzeDay", async (req, res) => {
       "analysis": "2-3 sentences of gentle, validating, non-clinical insight detailing their neural state.",
       "remedies": ["3 short, achievable, realistic, somatic and lifestyle remedies (e.g., Hydrate, 4-7-8 breathing, walk, stretch)"],
       "affirmation": "A personalized holding-space/empowering wellness tagline.",
-      "emergencyCalm": true/false (set to true ONLY if stress is >=7 or mood looks extremely distressed or flustered)
+      "emergencyCalm": true/false (set to true ONLY if stress is >=7 or mood looks extremely distressed or flustered),
+      "guide": {
+        "title": "Short title of the consolation or celebration masterclass guide",
+        "tone": "consoling" (for negative/stressed/sad states) | "celebratory" (for happy/energetic/peaceful states) | "stabilizing" (for low motivation/tired states),
+        "introduction": "2-3 comforting, elegant sentences. If they are in a negative/stressed state, gently CONSOLE them, normalize what they are feeling to reduce cognitive self-blame, and assure them it's temporary and valid. If positive, CHEER them up, celebrate their focus, and make them feel seen, validated, and genuinely uplifted.",
+        "steps": ["Step 1 direction: short, somatic, or mental action.", "Step 2 direction: short, somatic, or mental action.", "Step 3 direction: short, somatic, or mental action."]
+      }
     }
 
     Data to evaluate:
@@ -274,7 +280,7 @@ app.post("/api/gemini/analyzeDay", async (req, res) => {
       model: "gemini-3.5-flash",
       contents: prompt,
       config: {
-        systemInstruction: "You are AIRRA, a companion in quietness. Your task is to provide objective, compassionate bio-emotional self-reflection feedback in JSON.",
+        systemInstruction: "You are AIRRA, an intuitive companion in quietness and bio-emotional guide. Your task is to provide objective, deeply compassionate self-reflection feedback. If the user presents negative state markers, specialize in normalizing errors, comforting their strain, and easing coping. If positive state markers, enthusiastically cheer them up and anchor their joy.",
         responseMimeType: "application/json",
       },
     });
@@ -293,7 +299,17 @@ app.post("/api/gemini/analyzeDay", async (req, res) => {
           "Pour yourself a glass of warm herbal tea or water."
         ],
         affirmation: "I am flowing with my baseline, allowing peace to settle where it will.",
-        emergencyCalm: stress >= 7
+        emergencyCalm: stress >= 7,
+        guide: {
+          title: "Somatic Grounding & Resonance Calibration",
+          tone: stress >= 5 ? "consoling" : "stabilizing",
+          introduction: "It is completely normal and valid to notice tension or fatigue inside a busy sequence. Give yourself permission to pause; there is no error in needing a moment of rest.",
+          steps: [
+            "Place one hand on your heart and feel its steady, objective rhythm.",
+            "Inhale deeply for 4 seconds, pausing for 2, and sighing outwards like releasing ballast.",
+            "Gently circle your shoulders backwards twice to release residual mechanical strain."
+          ]
+        }
       });
     }
   } catch (error: any) {
