@@ -70,5 +70,28 @@ function isValidSupabaseUrl(url: string) {
 }
 
 export const supabase = (supabaseUrl && isValidSupabaseUrl(supabaseUrl) && supabaseAnonKey && supabaseAnonKey.length > 20) 
-  ? createClient(supabaseUrl, supabaseAnonKey) 
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      },
+      global: {
+        fetch: async (input, init) => {
+          try {
+            const res = await window.fetch(input, init);
+            return res;
+          } catch (err: any) {
+            console.warn("Supabase network request intercepted gracefully:", err?.message || err);
+            return new Response(JSON.stringify({
+              error: "service_unavailable",
+              message: "Supabase database or authentication endpoint is currently unreachable."
+            }), {
+              status: 503,
+              headers: { 'Content-Type': 'application/json' }
+            });
+          }
+        }
+      }
+    }) 
   : null;

@@ -136,11 +136,28 @@ export default function JournalHistory() {
     if (selectedIds.length === 0) return;
     setSynopsisLoading(true);
     setSynopsisError(null);
+
+    const getAuthHeader = async () => {
+      if (localStorage.getItem('test_mode') === 'true') {
+        return "Bearer mock-test-token";
+      }
+      if (supabase) {
+        const { data } = await supabase.auth.getSession();
+        if (data?.session?.access_token) {
+          return `Bearer ${data.session.access_token}`;
+        }
+      }
+      return "";
+    };
+
     try {
       const selectedEntries = journals.filter(j => selectedIds.includes(j.id));
       const res = await fetch('/api/gemini/summarizeJournals', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': await getAuthHeader()
+        },
         body: JSON.stringify({ entries: selectedEntries })
       });
       if (!res.ok) {

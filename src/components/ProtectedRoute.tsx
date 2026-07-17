@@ -81,7 +81,7 @@ export default function ProtectedRoute({
             }
           }
         } catch (error) {
-          console.error("Error loading user data:", error);
+          console.warn("Error loading user data gracefully handled:", error);
         } finally {
           if (mounted) setIsLoading(false);
         }

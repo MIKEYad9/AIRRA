@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
       } catch (error) {
-        console.error("Auth session check failed:", error);
+        console.warn("Auth session check handled cleanly:", error);
       } finally {
         // Only set loading false if we aren't already in test mode (which sets it in its own effect)
         if (localStorage.getItem('test_mode') !== 'true') {

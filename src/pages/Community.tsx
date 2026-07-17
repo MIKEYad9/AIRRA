@@ -35,43 +35,117 @@ export default function Community() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!supabase) return;
+    if (!supabase) {
+      // Offline / Test mode fallback
+      const MOCK_COMMUNITY_POSTS: Post[] = [
+        {
+          id: "mock_1",
+          user_id: "mock_user_1",
+          author_name: "Anonymous Identity 4a2b",
+          content: "Remember that taking a deep breath isn't a distraction from your work; it is the fuel for your clarity. Holding space for all of you today.",
+          likes_count: 14,
+          is_liked: false,
+          created_at: new Date(Date.now() - 3600000 * 2).toISOString()
+        },
+        {
+          id: "mock_2",
+          user_id: "mock_user_2",
+          author_name: "Anonymous Identity b8e1",
+          content: "Just completed a 10-minute coherence breathing session. My autonomic tension index went from High to completely relaxed. This platform is a lifesaver.",
+          likes_count: 28,
+          is_liked: true,
+          created_at: new Date(Date.now() - 3600000 * 8).toISOString()
+        },
+        {
+          id: "mock_3",
+          user_id: "mock_user_3",
+          author_name: "Anonymous Identity f9c3",
+          content: "Sovereign reflection is the only way to heal. Glad to have a place where my journal entries are 100% mine, encrypted, and completely wipeable.",
+          likes_count: 9,
+          is_liked: false,
+          created_at: new Date(Date.now() - 3600000 * 24).toISOString()
+        }
+      ];
+
+      const local = localStorage.getItem('airra_offline_posts');
+      if (local) {
+        setPosts(JSON.parse(local));
+      } else {
+        localStorage.setItem('airra_offline_posts', JSON.stringify(MOCK_COMMUNITY_POSTS));
+        setPosts(MOCK_COMMUNITY_POSTS);
+      }
+      return;
+    }
+
+    let channel: any = null;
 
     // Initial load
     const fetchPosts = async () => {
-      const { data: postsData } = await supabase
-        .from('community_posts')
-        .select(`*, post_likes(user_id)`)
-        .order('created_at', { ascending: false });
+      try {
+        const { data: postsData } = await supabase
+          .from('community_posts')
+          .select(`*, post_likes(user_id)`)
+          .order('created_at', { ascending: false });
 
-      if (postsData) {
-        const formatted = postsData.map((p: any) => ({
-          ...p,
-          is_liked: p.post_likes?.some((l: any) => l.user_id === profile?.id)
-        }));
-        setPosts(formatted);
+        if (postsData) {
+          const formatted = postsData.map((p: any) => ({
+            ...p,
+            is_liked: p.post_likes?.some((l: any) => l.user_id === profile?.id)
+          }));
+          setPosts(formatted);
+        }
+      } catch (err) {
+        console.warn("Could not fetch community posts cleanly:", err);
       }
     };
 
-    fetchPosts();
+    try {
+      fetchPosts();
 
-    // Real-time subscription
-    const channel = supabase
-      .channel('community_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts' }, () => {
-        fetchPosts();
-      })
-      .subscribe();
+      // Real-time subscription
+      channel = supabase
+        .channel('community_changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts' }, () => {
+          fetchPosts();
+        })
+        .subscribe();
+    } catch (err) {
+      console.warn("Could not establish community real-time subscription channel:", err);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        try {
+          supabase.removeChannel(channel);
+        } catch (err) {
+          console.warn("Error removing community channel:", err);
+        }
+      }
     };
   }, [profile]);
 
   const handlePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile || !input.trim() || !supabase) return;
+    if (!profile || !input.trim()) return;
     setLoading(true);
+
+    if (!supabase) {
+      const newPost: Post = {
+        id: 'local_' + Math.random().toString(36).substring(2, 9),
+        user_id: profile.id,
+        content: input.trim(),
+        author_name: 'Anonymous Identity ' + profile.id.substring(0, 4),
+        likes_count: 0,
+        is_liked: false,
+        created_at: new Date().toISOString()
+      };
+      const updated = [newPost, ...posts];
+      setPosts(updated);
+      localStorage.setItem('airra_offline_posts', JSON.stringify(updated));
+      setInput("");
+      setLoading(false);
+      return;
+    }
 
     const { error } = await supabase
       .from('community_posts')
@@ -88,7 +162,24 @@ export default function Community() {
   };
 
   const toggleLike = async (post: Post) => {
-    if (!profile || !supabase) return;
+    if (!profile) return;
+
+    if (!supabase) {
+      const updated = posts.map(p => {
+        if (p.id === post.id) {
+          const nextLiked = !p.is_liked;
+          return {
+            ...p,
+            is_liked: nextLiked,
+            likes_count: nextLiked ? p.likes_count + 1 : Math.max(0, p.likes_count - 1)
+          };
+        }
+        return p;
+      });
+      setPosts(updated);
+      localStorage.setItem('airra_offline_posts', JSON.stringify(updated));
+      return;
+    }
 
     if (post.is_liked) {
       await supabase

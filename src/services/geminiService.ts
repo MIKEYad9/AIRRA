@@ -1,4 +1,18 @@
 import { ChatMessage } from "../types";
+import { supabase } from "../lib/supabase";
+
+async function getAuthHeader(): Promise<string> {
+  if (localStorage.getItem('test_mode') === 'true') {
+    return "Bearer mock-test-token";
+  }
+  if (supabase) {
+    const { data } = await supabase.auth.getSession();
+    if (data?.session?.access_token) {
+      return `Bearer ${data.session.access_token}`;
+    }
+  }
+  return "";
+}
 
 export const SYSTEM_PROMPT = `
 You are AIRRA, an advanced AI emotional wellness coach and companion.
@@ -20,6 +34,7 @@ export async function suggestMoodTag(content: string): Promise<string> {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": await getAuthHeader(),
       },
       body: JSON.stringify({ content }),
     });
@@ -48,6 +63,7 @@ export async function transcribeAudio(base64Audio: string, mimeType: string): Pr
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": await getAuthHeader(),
       },
       body: JSON.stringify({ base64Audio, mimeType }),
     });
@@ -79,6 +95,7 @@ export async function generateFollowUpSuggestions(messages: ChatMessage[]): Prom
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": await getAuthHeader(),
       },
       body: JSON.stringify({ messages: safeMessages }),
     });
@@ -105,6 +122,7 @@ export async function sendChatMessage(message: string, history: ChatMessage[]): 
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": await getAuthHeader(),
       },
       body: JSON.stringify({ message, history }),
     });

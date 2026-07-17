@@ -38,30 +38,35 @@ export default function WellnessAnalytics() {
     async function fetchAnalytics() {
       if (!profile || !supabase) return;
 
-      const sevenDaysAgo = subDays(new Date(), 7).toISOString();
-      const { data: logs } = await supabase
-        .from('mood_logs')
-        .select('*')
-        .eq('user_id', profile.id)
-        .gte('created_at', sevenDaysAgo)
-        .order('created_at', { ascending: true });
+      try {
+        const sevenDaysAgo = subDays(new Date(), 7).toISOString();
+        const { data: logs } = await supabase
+          .from('mood_logs')
+          .select('*')
+          .eq('user_id', profile.id)
+          .gte('created_at', sevenDaysAgo)
+          .order('created_at', { ascending: true });
 
-      if (logs) {
-        const processed = Array.from({ length: 7 }).map((_, i) => {
-          const date = subDays(new Date(), 6 - i);
-          const dayLogs = logs.filter(log => isSameDay(new Date(log.created_at), date));
-          
-          return {
-            date: format(date, 'MMM dd'),
-            intensity: dayLogs.length > 0 
-              ? dayLogs.reduce((acc, log) => acc + (log.intensity || 5), 0) / dayLogs.length 
-              : 0,
-            stress: Math.random() * 5 + 2 // Mock stress data
-          };
-        });
-        setMoodData(processed);
+        if (logs) {
+          const processed = Array.from({ length: 7 }).map((_, i) => {
+            const date = subDays(new Date(), 6 - i);
+            const dayLogs = logs.filter(log => isSameDay(new Date(log.created_at), date));
+            
+            return {
+              date: format(date, 'MMM dd'),
+              intensity: dayLogs.length > 0 
+                ? dayLogs.reduce((acc, log) => acc + (log.intensity || 5), 0) / dayLogs.length 
+                : 0,
+              stress: Math.random() * 5 + 2 // Mock stress data
+            };
+          });
+          setMoodData(processed);
+        }
+      } catch (err) {
+        console.warn("Could not retrieve wellness analytics telemetry:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     fetchAnalytics();
   }, [profile]);

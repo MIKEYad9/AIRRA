@@ -184,7 +184,8 @@ export default function AIChat() {
       }
 
       try {
-        const { data: conversations } = await supabase!
+        if (!supabase) throw new Error("Supabase is offline");
+        const { data: conversations } = await supabase
           .from('conversations')
           .select('*')
           .eq('user_id', profile.id)
@@ -195,7 +196,7 @@ export default function AIChat() {
           const conv = conversations[0];
           setConversationId(conv.id);
           
-          const { data: msgs } = await supabase!
+          const { data: msgs } = await supabase
             .from('chat_messages')
             .select('*')
             .eq('conversation_id', conv.id)
@@ -236,13 +237,13 @@ export default function AIChat() {
 
   async function loadHistory() {
     if (!profile) return;
-    if (isOfflineOrTestMode()) {
+    if (isOfflineOrTestMode() || !supabase) {
       setHistory(getLocalConversations(profile.id));
       return;
     }
 
     try {
-      const { data, error } = await supabase!
+      const { data, error } = await supabase
         .from('conversations')
         .select('*')
         .eq('user_id', profile.id)
@@ -260,7 +261,7 @@ export default function AIChat() {
   }
 
   async function selectConversation(id: string) {
-    if (isOfflineOrTestMode() || (id && id.startsWith('local_'))) {
+    if (isOfflineOrTestMode() || !supabase || (id && id.startsWith('local_'))) {
       setConversationId(id);
       setIsHistoryOpen(false);
       const msgs = getLocalMessages(id);
@@ -275,7 +276,7 @@ export default function AIChat() {
     try {
       setConversationId(id);
       setIsHistoryOpen(false);
-      const { data: msgs, error } = await supabase!
+      const { data: msgs, error } = await supabase
         .from('chat_messages')
         .select('*')
         .eq('conversation_id', id)
@@ -310,7 +311,7 @@ export default function AIChat() {
     e.stopPropagation();
     if (!profile) return;
 
-    if (isOfflineOrTestMode() || (id && id.startsWith('local_'))) {
+    if (isOfflineOrTestMode() || !supabase || (id && id.startsWith('local_'))) {
       deleteLocalConversation(id);
       if (conversationId === id) {
         startNewChat();
@@ -320,7 +321,7 @@ export default function AIChat() {
     }
 
     try {
-      const { error } = await supabase!
+      const { error } = await supabase
         .from('conversations')
         .delete()
         .eq('id', id);
@@ -359,7 +360,7 @@ export default function AIChat() {
       let currentConvId = conversationId;
       let userMsg: ChatMessage | null = null;
 
-      if (isOfflineOrTestMode()) {
+      if (isOfflineOrTestMode() || !supabase) {
         if (!currentConvId) {
           const newConv = createLocalConversation(profile.id, contentToSend.substring(0, 40) + (contentToSend.length > 40 ? '...' : ''));
           currentConvId = newConv.id;
@@ -369,7 +370,7 @@ export default function AIChat() {
       } else {
         try {
           if (!currentConvId) {
-            const { data: newConv, error: convError } = await supabase!
+            const { data: newConv, error: convError } = await supabase
               .from('conversations')
               .insert({ 
                 user_id: profile.id, 
@@ -383,7 +384,7 @@ export default function AIChat() {
             setConversationId(currentConvId);
           }
 
-          const { data: insertedMsg, error: userMsgError } = await supabase!
+          const { data: insertedMsg, error: userMsgError } = await supabase
             .from('chat_messages')
             .insert({
               conversation_id: currentConvId,
@@ -415,11 +416,11 @@ export default function AIChat() {
       const aiContent = await sendChatMessage(contentToSend, messages);
 
       let aiMsg: ChatMessage | null = null;
-      if (isOfflineOrTestMode() || (currentConvId && currentConvId.startsWith('local_'))) {
+      if (isOfflineOrTestMode() || !supabase || (currentConvId && currentConvId.startsWith('local_'))) {
         aiMsg = createLocalMessage(currentConvId, 'model', aiContent);
       } else {
         try {
-          const { data: insertedAiMsg, error: aiMsgError } = await supabase!
+          const { data: insertedAiMsg, error: aiMsgError } = await supabase
             .from('chat_messages')
             .insert({
               conversation_id: currentConvId,
@@ -444,11 +445,11 @@ export default function AIChat() {
       setMessages(prev => [...prev, aiMsg as ChatMessage]);
       setEmpathyState('Calibrated');
 
-      if (isOfflineOrTestMode() || (currentConvId && currentConvId.startsWith('local_'))) {
+      if (isOfflineOrTestMode() || !supabase || (currentConvId && currentConvId.startsWith('local_'))) {
         updateLocalConversationTime(currentConvId);
       } else {
         try {
-          await supabase!
+          await supabase
             .from('conversations')
             .update({ updated_at: new Date().toISOString() })
             .eq('id', currentConvId);

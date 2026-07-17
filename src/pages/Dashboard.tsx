@@ -139,10 +139,27 @@ export default function Dashboard() {
     e.stopPropagation();
     setInsightsLoading(true);
     setInsightsError(false);
+
+    const getAuthHeader = async () => {
+      if (localStorage.getItem('test_mode') === 'true') {
+        return "Bearer mock-test-token";
+      }
+      if (supabase) {
+        const { data } = await supabase.auth.getSession();
+        if (data?.session?.access_token) {
+          return `Bearer ${data.session.access_token}`;
+        }
+      }
+      return "";
+    };
+
     try {
       const res = await fetch("/api/protocol/apply", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": await getAuthHeader()
+        },
         body: JSON.stringify({ protocolId: "deep-focus" })
       });
       setToastMessage("Protocol Applied ✓");

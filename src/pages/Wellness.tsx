@@ -23,6 +23,7 @@ import {
 import { Link } from "react-router-dom";
 import BreathingTimer from "@/src/components/BreathingTimer";
 import { synther } from "../lib/synthEngine";
+import { supabase } from "../lib/supabase";
 
 const EXPERIENCES = [
   {
@@ -105,10 +106,26 @@ export default function WellnessPage() {
   const [hemisphericRatio, setHemisphericRatio] = useState(50);
 
   const handleSelectSound = async (label: string) => {
+    const getAuthHeader = async () => {
+      if (localStorage.getItem('test_mode') === 'true') {
+        return "Bearer mock-test-token";
+      }
+      if (supabase) {
+        const { data } = await supabase.auth.getSession();
+        if (data?.session?.access_token) {
+          return `Bearer ${data.session.access_token}`;
+        }
+      }
+      return "";
+    };
+
     try {
       await fetch("/api/session/sound", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": await getAuthHeader()
+        },
         body: JSON.stringify({ type: label.toLowerCase().replace(" ", "_") })
       });
     } catch (e) {

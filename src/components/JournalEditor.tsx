@@ -278,12 +278,28 @@ export default function JournalEditor({ onSave, onCancel }: JournalEditorProps) 
 
   // Fetch AI journal-assist writing suggestions
   const fetchWritingStarters = async () => {
+    const getAuthHeader = async () => {
+      if (localStorage.getItem('test_mode') === 'true') {
+        return "Bearer mock-test-token";
+      }
+      if (supabase) {
+        const { data } = await supabase.auth.getSession();
+        if (data?.session?.access_token) {
+          return `Bearer ${data.session.access_token}`;
+        }
+      }
+      return "";
+    };
+
     setFetchingSuggestions(true);
     setWritingSuggestions([]);
     try {
       const res = await fetch('/api/gemini/journal-assist', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': await getAuthHeader()
+        },
         body: JSON.stringify({ 
           mood: selectedMood.label, 
           tags: selectedTags 
@@ -314,6 +330,19 @@ export default function JournalEditor({ onSave, onCancel }: JournalEditorProps) 
 
   // Fetch AI bio-emotional calibration overview
   const fetchAIAnalysis = async () => {
+    const getAuthHeader = async () => {
+      if (localStorage.getItem('test_mode') === 'true') {
+        return "Bearer mock-test-token";
+      }
+      if (supabase) {
+        const { data } = await supabase.auth.getSession();
+        if (data?.session?.access_token) {
+          return `Bearer ${data.session.access_token}`;
+        }
+      }
+      return "";
+    };
+
     setFetchingAnalysis(true);
     setAiAnalysis(null);
     const hasAnyContent = Object.values(journalAnswers).some(val => (val as string).trim().length > 0);
@@ -321,7 +350,10 @@ export default function JournalEditor({ onSave, onCancel }: JournalEditorProps) 
     try {
       const res = await fetch('/api/gemini/analyzeDay', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': await getAuthHeader()
+        },
         body: JSON.stringify({
           mood: selectedMood.label,
           energy: vitalSliders.energy,
